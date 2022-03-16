@@ -1,3 +1,7 @@
+#![deny(clippy::all)]
+#![warn(clippy::pedantic)]
+#![feature(int_log)]
+
 mod probability;
 pub use probability::Probability;
 
@@ -9,3 +13,5 @@ pub use encoder::Encoder;
 
 mod decoder;
 pub use decoder::Decoder;
+
+mod util;

@@ -42,20 +42,22 @@ where
 
     fn encode_symbol<W: BitWrite>(
         &mut self,
-        symbol: Option<M::Symbol>,
+        symbol: Option<&M::Symbol>,
         output: &mut W,
     ) -> io::Result<()> {
         let range = self.high - self.low + 1;
-        let p = self.model.probability(symbol.as_ref());
+        let p = self.model.probability(symbol);
 
-        self.high = self.low + (range * p.high()) / p.denominator();
-        self.low += (range * p.low()) / p.denominator();
+        self.high = self.low + (range * p.end) / M::denominator();
+        self.low += (range * p.start) / M::denominator();
+        self.model.update(symbol);
         self.normalise(output)
     }
 
     fn normalise<W: BitWrite>(&mut self, output: &mut W) -> io::Result<()> {
         // this algorithm is derived from this article - https://marknelson.us/posts/2014/10/19/data-compression-with-arithmetic-coding.html
-        while self.high < self.half() || self.low >= self.half() {
+
+        while self.high < self.half() || self.low > self.half() {
             if self.high < self.half() {
                 self.emit(false, output)?;
                 self.high *= 2;
@@ -103,7 +105,7 @@ where
         output: &mut W,
     ) -> io::Result<()> {
         for symbol in symbols {
-            self.encode_symbol(Some(symbol), output)?;
+            self.encode_symbol(Some(&symbol), output)?;
         }
         self.encode_symbol(None, output)?;
         self.flush(output)?;

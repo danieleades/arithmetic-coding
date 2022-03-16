@@ -9,22 +9,22 @@ impl<T> Probability<T>
 where
     T: PartialOrd,
 {
-    pub fn new(bounds: Range<T>, denominator: T) -> Self {
+    pub const fn new(bounds: Range<T>, denominator: T) -> Self {
         Self {
             bounds,
             denominator,
         }
     }
 
-    pub fn low(&self) -> &T {
+    pub const fn low(&self) -> &T {
         &self.bounds.start
     }
 
-    pub fn high(&self) -> &T {
+    pub const fn high(&self) -> &T {
         &self.bounds.end
     }
 
-    pub fn denominator(&self) -> &T {
+    pub const fn denominator(&self) -> &T {
         &self.denominator
     }
 }

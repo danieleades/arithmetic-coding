@@ -1,7 +1,9 @@
-use crate::Probability;
+use std::ops::Range;
 
-pub trait Model<T = u32> {
+pub trait Model {
     type Symbol;
-    fn probability(&self, symbol: Option<&Self::Symbol>) -> Probability<T>;
-    fn symbol(&self, value: T) -> Option<Self::Symbol>;
+    fn probability(&self, symbol: Option<&Self::Symbol>) -> Range<u32>;
+    fn denominator() -> u32;
+    fn symbol(&self, value: u32) -> Option<Self::Symbol>;
+    fn update(&mut self, _symbol: Option<&Self::Symbol>) {}
 }

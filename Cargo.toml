@@ -7,3 +7,7 @@ edition = "2021"
 
 [dependencies]
 bitstream-io = "1.2.0"
+num-traits = "0.2.14"
+
+[dev-dependencies]
+test-case = "2.0.0"
