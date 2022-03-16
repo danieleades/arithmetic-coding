@@ -12,3 +12,13 @@ pub use encoder::Encoder;
 
 mod decoder;
 pub use decoder::Decoder;
+
+/// Errors that can occur during encoding/decoding
+#[derive(Debug, thiserror::Error)]
+pub enum Error<E> {
+    /// Io error when reading/writing bits from a stream
+    Io(#[from] std::io::Error),
+
+    /// Invalid symbol
+    ValueError(E),
+}

@@ -2,7 +2,7 @@ use std::io;
 
 use bitstream_io::BitRead;
 
-use crate::Model;
+use crate::{Error, Model};
 
 // this algorithm is derived from this article - https://marknelson.us/posts/2014/10/19/data-compression-with-arithmetic-coding.html
 
@@ -93,12 +93,15 @@ where
     /// # Errors
     ///
     /// This method can fail if the underlying [`BitRead`] cannot be read from.
-    pub fn decode_symbol(&mut self) -> io::Result<Option<M::Symbol>> {
+    pub fn decode_symbol(&mut self) -> Result<Option<M::Symbol>, Error<M::ValueError>> {
         let range = self.high - self.low + 1;
         let value = ((self.x - self.low + 1) * self.model.denominator() - 1) / range;
         let symbol = self.model.symbol(value);
 
-        let p = self.model.probability(symbol.as_ref());
+        let p = self
+            .model
+            .probability(symbol.as_ref())
+            .map_err(Error::ValueError)?;
 
         self.high = self.low + (range * p.end) / self.model.denominator() - 1;
         self.low += (range * p.start) / self.model.denominator();

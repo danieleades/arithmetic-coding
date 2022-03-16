@@ -2,7 +2,7 @@ use std::io;
 
 use bitstream_io::BitWrite;
 
-use crate::Model;
+use crate::{Error, Model};
 
 // this algorithm is derived from this article - https://marknelson.us/posts/2014/10/19/data-compression-with-arithmetic-coding.html
 
@@ -55,14 +55,15 @@ where
         &mut self,
         symbol: Option<&M::Symbol>,
         output: &mut W,
-    ) -> io::Result<()> {
+    ) -> Result<(), Error<M::ValueError>> {
         let range = self.high - self.low + 1;
-        let p = self.model.probability(symbol);
+        let p = self.model.probability(symbol).map_err(Error::ValueError)?;
 
         self.high = self.low + (range * p.end) / self.model.denominator() - 1;
         self.low += (range * p.start) / self.model.denominator();
         self.model.update(symbol);
-        self.normalise(output)
+        self.normalise(output)?;
+        Ok(())
     }
 
     fn normalise<W: BitWrite>(&mut self, output: &mut W) -> io::Result<()> {
@@ -120,7 +121,7 @@ where
         &mut self,
         symbols: impl IntoIterator<Item = M::Symbol>,
         output: &mut W,
-    ) -> io::Result<()> {
+    ) -> Result<(), Error<M::ValueError>> {
         for symbol in symbols {
             self.encode_symbol(Some(&symbol), output)?;
         }

@@ -14,21 +14,23 @@ impl StringModel {
     }
 }
 
+#[derive(Debug, thiserror::Error)]
+#[error("invalid character: {0}")]
+pub struct Error(char);
+
 impl Model for StringModel {
     type Symbol = char;
+    type ValueError = Error;
 
-    fn probability(&self, symbol: Option<&Self::Symbol>) -> Range<u32> {
+    fn probability(&self, symbol: Option<&Self::Symbol>) -> Result<Range<u32>, Error> {
         if let Some(char) = symbol {
-            let index = self
-                .alphabet
-                .iter()
-                .position(|x| x == char)
-                .unwrap_or_else(|| panic!("unexpected character: {}", char))
-                as u32;
-            index..(index + 1)
+            match self.alphabet.iter().position(|x| x == char) {
+                Some(index) => Ok((index as u32)..(index as u32 + 1)),
+                None => Err(Error(*char)),
+            }
         } else {
             let alphabet_length = self.alphabet.len() as u32;
-            alphabet_length..(alphabet_length + 1)
+            Ok(alphabet_length..(alphabet_length + 1))
         }
     }
 
@@ -86,5 +88,5 @@ fn main() {
         output.push(symbol);
     }
 
-    // println!("{}", output);
+    println!("{}", output);
 }

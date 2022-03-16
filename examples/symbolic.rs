@@ -1,4 +1,5 @@
 #![feature(exclusive_range_pattern)]
+#![feature(never_type)]
 
 use std::ops::Range;
 
@@ -16,14 +17,15 @@ pub struct MyModel;
 
 impl Model for MyModel {
     type Symbol = Symbol;
+    type ValueError = !;
 
-    fn probability(&self, symbol: Option<&Self::Symbol>) -> Range<u32> {
-        match symbol {
+    fn probability(&self, symbol: Option<&Self::Symbol>) -> Result<Range<u32>, !> {
+        Ok(match symbol {
             None => 0..1,
             Some(&Symbol::A) => 1..2,
             Some(&Symbol::B) => 2..3,
             Some(&Symbol::C) => 3..4,
-        }
+        })
     }
 
     fn symbol(&self, value: u32) -> Option<Self::Symbol> {

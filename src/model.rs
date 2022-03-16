@@ -1,4 +1,4 @@
-use std::ops::Range;
+use std::{error::Error, ops::Range};
 
 /// A [`Model`] is used to calculate the probability of a given symbol occuring
 /// in a sequence. The [`Model`] is used both for encoding and decoding.
@@ -10,6 +10,7 @@ use std::ops::Range;
 ///
 /// ```
 /// #![feature(exclusive_range_pattern)]
+/// #![feature(never_type)]
 /// use std::ops::Range;
 ///
 /// use arithmetic_coding::Model;
@@ -24,14 +25,15 @@ use std::ops::Range;
 ///
 /// impl Model for MyModel {
 ///     type Symbol = Symbol;
+///     type ValueError = !;
 ///
-///     fn probability(&self, symbol: Option<&Self::Symbol>) -> Range<u32> {
-///         match symbol {
+///     fn probability(&self, symbol: Option<&Self::Symbol>) -> Result<Range<u32>, !> {
+///         Ok(match symbol {
 ///             None => 0..1,
 ///             Some(&Symbol::A) => 1..2,
 ///             Some(&Symbol::B) => 2..3,
 ///             Some(&Symbol::C) => 3..4,
-///         }
+///         })
 ///     }
 ///
 ///     fn symbol(&self, value: u32) -> Option<Self::Symbol> {
@@ -53,6 +55,9 @@ pub trait Model {
     /// The type of symbol this [`Model`] describes
     type Symbol;
 
+    /// Invalid symbol error
+    type ValueError: Error;
+
     /// Given a symbol, return an interval representing the probability of that
     /// symbol occurring.
     ///
@@ -65,7 +70,11 @@ pub trait Model {
     /// `2..3` (with a denominator of `3`).
     ///
     /// This is the inverse of the [`Model::symbol`] method
-    fn probability(&self, symbol: Option<&Self::Symbol>) -> Range<u32>;
+    ///
+    /// # Errors
+    ///
+    /// This returns a custom error if the given symbol is not valid
+    fn probability(&self, symbol: Option<&Self::Symbol>) -> Result<Range<u32>, Self::ValueError>;
 
     /// The denominator for probability ranges. See [`Model::probability`].
     ///
