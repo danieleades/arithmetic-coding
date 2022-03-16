@@ -7,16 +7,21 @@ use bitstream_io::{BigEndian, BitReader, BitWrite, BitWriter};
 
 pub struct MyModel;
 
+#[derive(Debug, thiserror::Error)]
+#[error("invalid symbol: {0}")]
+pub struct Error(u8);
+
 impl Model for MyModel {
     type Symbol = u8;
+    type ValueError = Error;
 
-    fn probability(&self, symbol: Option<&Self::Symbol>) -> Range<u32> {
+    fn probability(&self, symbol: Option<&Self::Symbol>) -> Result<Range<u32>, Error> {
         match symbol {
-            None => 0..1,
-            Some(&1) => 1..2,
-            Some(&2) => 2..3,
-            Some(&3) => 2..4,
-            Some(_) => unreachable!(),
+            None => Ok(0..1),
+            Some(&1) => Ok(1..2),
+            Some(&2) => Ok(2..3),
+            Some(&3) => Ok(2..4),
+            Some(x) => Err(Error(*x)),
         }
     }
 
