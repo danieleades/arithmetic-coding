@@ -9,6 +9,9 @@ use std::ops::Range;
 /// # Example
 ///
 /// ```
+/// #![feature(exclusive_range_pattern)]
+/// use std::ops::Range;
+///
 /// use arithmetic_coding::Model;
 ///
 /// pub enum Symbol {
