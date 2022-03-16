@@ -11,26 +11,27 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        build: [msrv, stable, beta, nightly, macos, windows]
+        #build: [msrv, stable, beta, nightly, macos, windows]
+        build: [nightly]
         include:
-          - build: msrv
-            os: ubuntu-latest
-            rust: 1.56
-          - build: stable
-            os: ubuntu-latest
-            rust: stable
-          - build: beta
-            os: ubuntu-latest
-            rust: beta
+          # - build: msrv
+          #   os: ubuntu-latest
+          #   rust: 1.56
+          # - build: stable
+          #   os: ubuntu-latest
+          #   rust: stable
+          # - build: beta
+          #   os: ubuntu-latest
+          #   rust: beta
           - build: nightly
             os: ubuntu-latest
             rust: nightly
-          - build: macos
-            os: macos-latest
-            rust: stable
-          - build: windows
-            os: windows-latest
-            rust: stable
+          # - build: macos
+          #   os: macos-latest
+          #   rust: stable
+          # - build: windows
+          #   os: windows-latest
+          #   rust: stable
     steps:
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
@@ -75,17 +76,17 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           args: --all-features --tests --examples
 
-  docs:
-    name: docs
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-          profile: minimal
-      - uses: actions-rs/cargo@v1
-        with:
-          command: doc
-          args: --no-deps
+  # docs:
+  #   name: docs
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: actions-rs/toolchain@v1
+  #       with:
+  #         toolchain: stable
+  #         override: true
+  #         profile: minimal
+  #     - uses: actions-rs/cargo@v1
+  #       with:
+  #         command: doc
+  #         args: --no-deps
