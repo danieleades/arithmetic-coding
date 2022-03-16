@@ -1,8 +1,16 @@
 use std::io;
 
-use crate::Model;
 use bitstream_io::BitRead;
 
+use crate::Model;
+
+// this algorithm is derived from this article - https://marknelson.us/posts/2014/10/19/data-compression-with-arithmetic-coding.html
+
+/// An arithmetic decoder
+///
+/// An arithmetic decoder converts a stream of bytes into a stream of some
+/// output symbol, using a predictive [`Model`].
+#[derive(Debug)]
 pub struct Decoder<M, R>
 where
     M: Model,
@@ -36,57 +44,70 @@ where
     R: BitRead,
     M::Symbol: std::fmt::Debug,
 {
-    pub fn new(model: M, precision: u32, mut input: R) -> io::Result<Self> {
+    /// Construct a new [`Decoder`]
+    ///
+    /// # Errors
+    ///
+    /// This method can fail if the underlying [`BitRead`] cannot be read from.
+    pub fn new(model: M, input: R) -> io::Result<Self> {
+        let precision = 32 - model.denominator().log2() + 1 - 2;
         let low = 0;
-        let high = 2u32.pow(precision);
+        let high = 2u32.pow(precision as u32);
 
-        let mut x = 0;
+        let x = 0;
 
-        for i in 1..precision {
-            match input.next_bit()? {
-                Some(true) => {
-                    x += 2u32.pow(precision - i);
-                }
-                Some(false) => (),
-                None => break,
-            }
-        }
-
-        Ok(Self {
+        let mut encoder = Self {
             model,
             precision,
             low,
             high,
             input,
             x,
-        })
+        };
+
+        encoder.fill()?;
+        Ok(encoder)
+    }
+
+    fn fill(&mut self) -> io::Result<()> {
+        for _ in 0..self.precision {
+            let bit = self.input.next_bit()?.unwrap_or_default();
+            self.x <<= 1;
+            self.x += u32::from(bit);
+        }
+        Ok(())
     }
 
     const fn half(&self) -> u32 {
-        2u32.pow(self.precision - 1)
+        2u32.pow(self.precision as u32 - 1)
     }
 
     const fn quarter(&self) -> u32 {
-        2u32.pow(self.precision - 2)
+        2u32.pow(self.precision as u32 - 2)
     }
 
+    /// Read the next symbol from the stream of bits
+    ///
+    /// This method will return `Ok(None)` when EOF is reached.
+    ///
+    /// # Errors
+    ///
+    /// This method can fail if the underlying [`BitRead`] cannot be read from.
     pub fn decode_symbol(&mut self) -> io::Result<Option<M::Symbol>> {
         let range = self.high - self.low + 1;
-        let value = ((self.x - self.low + 1) * M::denominator() - 1) / range;
+        let value = ((self.x - self.low + 1) * self.model.denominator() - 1) / range;
         let symbol = self.model.symbol(value);
 
         let p = self.model.probability(symbol.as_ref());
 
-        self.high = self.low + (range * p.end) / M::denominator() - 1;
-        self.low += (range * p.start) / M::denominator();
+        self.high = self.low + (range * p.end) / self.model.denominator() - 1;
+        self.low += (range * p.start) / self.model.denominator();
 
         self.normalise()?;
         Ok(symbol)
     }
 
     fn normalise(&mut self) -> io::Result<()> {
-        // this algorithm is derived from this article - https://marknelson.us/posts/2014/10/19/data-compression-with-arithmetic-coding.html
-
         while self.high < self.half() || self.low >= self.half() {
             if self.high < self.half() {
                 self.high *= 2;
@@ -107,7 +128,7 @@ where
             }
         }
 
-        while self.quarter() <= self.low && self.high < 3 * self.quarter() {
+        while self.low >= self.quarter() && self.high < (3 * self.quarter()) {
             self.low = 2 * (self.low - self.quarter());
             self.high = 2 * (self.high - self.quarter());
             self.x = 2 * (self.x - self.quarter());

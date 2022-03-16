@@ -1,9 +1,8 @@
-#![deny(clippy::all)]
+//! Arithmetic coding library
+
+#![deny(missing_docs, clippy::all, missing_debug_implementations)]
 #![warn(clippy::pedantic)]
 #![feature(int_log)]
-
-mod probability;
-pub use probability::Probability;
 
 mod model;
 pub use model::Model;
@@ -13,5 +12,3 @@ pub use encoder::Encoder;
 
 mod decoder;
 pub use decoder::Decoder;
-
-mod util;

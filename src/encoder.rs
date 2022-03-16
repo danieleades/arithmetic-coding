@@ -1,8 +1,16 @@
 use std::io;
 
-use crate::Model;
 use bitstream_io::BitWrite;
 
+use crate::Model;
+
+// this algorithm is derived from this article - https://marknelson.us/posts/2014/10/19/data-compression-with-arithmetic-coding.html
+
+/// An arithmetic encoder
+///
+/// An arithmetic decoder converts a stream of symbols into a stream of bits,
+/// using a predictive [`Model`].
+#[derive(Debug)]
 pub struct Encoder<M>
 where
     M: Model,
@@ -18,9 +26,12 @@ impl<M> Encoder<M>
 where
     M: Model,
 {
-    pub fn new(model: M, precision: u32) -> Self {
+    /// Construct a new [`Encoder`]
+    pub fn new(model: M) -> Self {
+        let precision = 32 - model.denominator().log2() + 1 - 2;
+
         let low = 0;
-        let high = 2u32.pow(precision);
+        let high = 2u32.pow(precision as u32);
         let pending = 0;
 
         Self {
@@ -33,11 +44,11 @@ where
     }
 
     const fn half(&self) -> u32 {
-        2u32.pow(self.precision - 1)
+        2u32.pow(self.precision as u32 - 1)
     }
 
     const fn quarter(&self) -> u32 {
-        2u32.pow(self.precision - 2)
+        2u32.pow(self.precision as u32 - 2)
     }
 
     fn encode_symbol<W: BitWrite>(
@@ -48,8 +59,8 @@ where
         let range = self.high - self.low + 1;
         let p = self.model.probability(symbol);
 
-        self.high = self.low + (range * p.end) / M::denominator();
-        self.low += (range * p.start) / M::denominator();
+        self.high = self.low + (range * p.end) / self.model.denominator() - 1;
+        self.low += (range * p.start) / self.model.denominator();
         self.model.update(symbol);
         self.normalise(output)
     }
@@ -57,7 +68,7 @@ where
     fn normalise<W: BitWrite>(&mut self, output: &mut W) -> io::Result<()> {
         // this algorithm is derived from this article - https://marknelson.us/posts/2014/10/19/data-compression-with-arithmetic-coding.html
 
-        while self.high < self.half() || self.low > self.half() {
+        while self.high < self.half() || self.low >= self.half() {
             if self.high < self.half() {
                 self.emit(false, output)?;
                 self.high *= 2;
@@ -70,7 +81,7 @@ where
             }
         }
 
-        while self.quarter() < self.low && self.high < 3 * self.quarter() {
+        while self.low >= self.quarter() && self.high < (3 * self.quarter()) {
             self.pending += 1;
             self.low = 2 * (self.low - self.quarter());
             self.high = 2 * (self.high - self.quarter());
@@ -99,6 +110,12 @@ where
         Ok(())
     }
 
+    /// Encode a stream of symbols into the provided output
+    ///
+    /// # Errors
+    ///
+    /// This method can fail if the underlying [`BitWrite`] cannot be written
+    /// to.
     pub fn encode<W: BitWrite>(
         &mut self,
         symbols: impl IntoIterator<Item = M::Symbol>,

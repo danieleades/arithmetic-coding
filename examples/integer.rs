@@ -2,11 +2,8 @@
 
 use std::ops::Range;
 
-use arithmetic_coding::Decoder;
-use arithmetic_coding::{Encoder, Model};
-use bitstream_io::BigEndian;
-use bitstream_io::BitWriter;
-use bitstream_io::{BitReader, BitWrite};
+use arithmetic_coding::{Decoder, Encoder, Model};
+use bitstream_io::{BigEndian, BitReader, BitWrite, BitWriter};
 
 pub struct MyModel;
 
@@ -33,7 +30,7 @@ impl Model for MyModel {
         }
     }
 
-    fn denominator() -> u32 {
+    fn denominator(&self) -> u32 {
         4
     }
 }
@@ -43,7 +40,7 @@ fn main() {
 
     let output = Vec::default();
     let mut bitwriter = BitWriter::endian(output, BigEndian);
-    let mut encoder = Encoder::new(MyModel, 12);
+    let mut encoder = Encoder::new(MyModel);
 
     println!("encoding...");
     encoder.encode(input, &mut bitwriter).unwrap();
@@ -56,7 +53,7 @@ fn main() {
     let bitreader = BitReader::endian(buffer.as_slice(), BigEndian);
 
     println!("\ndecoding...");
-    let mut decoder = Decoder::new(MyModel, 12, bitreader).unwrap();
+    let mut decoder = Decoder::new(MyModel, bitreader).unwrap();
     while let Some(symbol) = decoder.decode_symbol().unwrap() {
         dbg!(symbol);
     }
