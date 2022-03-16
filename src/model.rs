@@ -77,7 +77,7 @@ pub trait Model {
     ///
     /// `None` indicates `EOF`
     ///
-    /// This is the inverse of the [`Model::range`] method
+    /// This is the inverse of the [`Model::probability`] method
     fn symbol(&self, value: u32) -> Option<Self::Symbol>;
 
     /// Update the current state of the model with the latest symbol.
