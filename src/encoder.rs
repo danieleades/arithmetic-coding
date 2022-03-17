@@ -27,8 +27,29 @@ where
     M: Model,
 {
     /// Construct a new [`Encoder`]
+    ///
+    /// The 'precision' of the encoder is maximised, based on the number of bits
+    /// needed to represent the [`Model::denominator`]. 'precision' bits is
+    /// equal to [`u32::BITS`] - [`Model::denominator`] bits.
+    ///
+    /// # Panics
+    ///
+    /// The calculation of the number of bits used for 'precision' is subject to
+    /// the following constraints:
+    ///
+    /// - The total available bits is [`u32::BITS`]
+    /// - The precision must use at least 2 more bits than that needed to
+    ///   represent [`Model::denominator`]
+    ///
+    /// If these constraints cannot be satisfied this method will panic
     pub fn new(model: M) -> Self {
-        let precision = 32 - model.denominator().log2() + 1 - 2;
+        let frequency_bits = model.max_denominator().log2() + 1;
+        let minimum_precision = frequency_bits + 2;
+        assert!(
+            (frequency_bits + minimum_precision) <= u32::BITS,
+            "not enough bits to guarantee overflow/underflow avoidance"
+        );
+        let precision = u32::BITS - frequency_bits;
 
         let low = 0;
         let high = 2u32.pow(precision as u32);
@@ -59,8 +80,8 @@ where
         let range = self.high - self.low + 1;
         let p = self.model.probability(symbol).map_err(Error::ValueError)?;
 
-        self.high = self.low + (range * p.end) / self.model.denominator() - 1;
-        self.low += (range * p.start) / self.model.denominator();
+        self.high = self.low + (range * p.start) / self.model.denominator() - 1;
+        self.low += (range * p.end) / self.model.denominator();
         self.model.update(symbol);
         self.normalise(output)?;
         Ok(())

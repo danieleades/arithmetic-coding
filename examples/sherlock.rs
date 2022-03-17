@@ -38,7 +38,7 @@ impl Model for StringModel {
         self.alphabet.get(value as usize).copied()
     }
 
-    fn denominator(&self) -> u32 {
+    fn max_denominator(&self) -> u32 {
         self.alphabet.len() as u32 + 1
     }
 }

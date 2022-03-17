@@ -50,7 +50,14 @@ where
     ///
     /// This method can fail if the underlying [`BitRead`] cannot be read from.
     pub fn new(model: M, input: R) -> io::Result<Self> {
-        let precision = 32 - model.denominator().log2() + 1 - 2;
+        let frequency_bits = model.max_denominator().log2() + 1;
+        let minimum_precision = frequency_bits + 2;
+        assert!(
+            (frequency_bits + minimum_precision) <= u32::BITS,
+            "not enough bits to guarantee overflow/underflow avoidance"
+        );
+        let precision = u32::BITS - frequency_bits;
+
         let low = 0;
         let high = 2u32.pow(precision as u32);
 

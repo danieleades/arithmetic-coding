@@ -78,9 +78,24 @@ pub trait Model {
 
     /// The denominator for probability ranges. See [`Model::probability`].
     ///
-    /// This value is also used to calculate an appropriate precision for the
-    /// encoding.
-    fn denominator(&self) -> u32;
+    /// By default this method simply returns the [`Model::max_denominator`],
+    /// which is suitable for non-adaptive models.
+    ///
+    /// In adaptive models this value may change, however it should never exceed
+    /// [`Model::max_denominator`], or it becomes possible for the
+    /// [`Encoder`](crate::Encoder) and [`Decoder`](crate::Decoder) to panic due
+    /// to overflow or underflow.
+    fn denominator(&self) -> u32 {
+        self.max_denominator()
+    }
+
+    /// The maximum denominator used for probability ranges. See
+    /// [`Model::probability`].
+    ///
+    /// This value is used to calculate an appropriate precision for the
+    /// encoding, therefore this value must not change, and
+    /// [`Model::denominator`] must never exceed it.
+    fn max_denominator(&self) -> u32;
 
     /// Given a value, return the symbol whose probability range it falls in.
     ///
