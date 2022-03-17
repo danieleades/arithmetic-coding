@@ -2,7 +2,7 @@ use std::io;
 
 use bitstream_io::BitRead;
 
-use crate::{util, BitStore, Error, Model};
+use crate::{BitStore, Error, Model};
 
 // this algorithm is derived from this article - https://marknelson.us/posts/2014/10/19/data-compression-with-arithmetic-coding.html
 
@@ -65,7 +65,43 @@ where
     /// If these constraints cannot be satisfied this method will panic in debug
     /// builds
     pub fn new(model: M, input: R) -> io::Result<Self> {
-        let precision = util::precision(model.max_denominator());
+        let frequency_bits = model.max_denominator().log2() + 1;
+        let precision = u32::BITS - frequency_bits;
+
+        Self::with_precision(model, input, precision)
+    }
+
+    /// Construct a new [`Decoder`]
+    ///
+    /// The 'precision' of the encoder is maximised, based on the number of bits
+    /// needed to represent the [`Model::denominator`]. 'precision' bits is
+    /// equal to [`u32::BITS`] - [`Model::denominator`] bits.
+    ///
+    /// # Errors
+    ///
+    /// This method can fail if the underlying [`BitRead`] cannot be read from.
+    ///
+    /// # Panics
+    ///
+    /// The calculation of the number of bits used for 'precision' is subject to
+    /// the following constraints:
+    ///
+    /// - The total available bits is [`u32::BITS`]
+    /// - The precision must use at least 2 more bits than that needed to
+    ///   represent [`Model::denominator`]
+    ///
+    /// If these constraints cannot be satisfied this method will panic in debug
+    /// builds
+    pub fn with_precision(model: M, input: R, precision: u32) -> io::Result<Self> {
+        let frequency_bits = model.max_denominator().log2() + 1;
+        debug_assert!(
+            precision >= (frequency_bits + 2),
+            "not enough bits of precision to guarantee overflow/underflow avoidance"
+        );
+        debug_assert!(
+            (frequency_bits + precision) <= u32::BITS,
+            "frequency bits + precision bits greater than maximum (32)"
+        );
 
         let low = M::B::ZERO;
         let high = M::B::ONE << precision;
@@ -169,5 +205,23 @@ where
         }
 
         Ok(())
+    }
+
+    /// Chain this decoder with a new model
+    ///
+    /// Allows for concatenating different types of symbols together, without
+    /// needing to end on a whole bit.
+    ///
+    /// TODO: this method doesn't assert that the precision is appropriate for
+    /// the new model
+    pub fn chain<X>(self, model: X) -> Decoder<X, R> where X: Model<B = M::B> {
+        Decoder {
+            model,
+            precision: self.precision,
+            low: self.low,
+            high: self.high,
+            input: self.input,
+            x: self.x,
+        }
     }
 }
