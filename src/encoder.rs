@@ -80,8 +80,8 @@ where
         let range = self.high - self.low + 1;
         let p = self.model.probability(symbol).map_err(Error::ValueError)?;
 
-        self.high = self.low + (range * p.start) / self.model.denominator() - 1;
-        self.low += (range * p.end) / self.model.denominator();
+        self.high = self.low + (range * p.end) / self.model.denominator() - 1;
+        self.low += (range * p.start) / self.model.denominator();
         self.model.update(symbol);
         self.normalise(output)?;
         Ok(())
