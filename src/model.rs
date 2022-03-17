@@ -46,7 +46,7 @@ use std::{error::Error, ops::Range};
 ///         }
 ///     }
 ///
-///     fn denominator(&self) -> u32 {
+///     fn max_denominator(&self) -> u32 {
 ///         4
 ///     }
 /// }

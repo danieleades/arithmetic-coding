@@ -89,8 +89,6 @@ where
     }
 
     fn normalise<W: BitWrite>(&mut self, output: &mut W) -> io::Result<()> {
-        // this algorithm is derived from this article - https://marknelson.us/posts/2014/10/19/data-compression-with-arithmetic-coding.html
-
         while self.high < self.half() || self.low >= self.half() {
             if self.high < self.half() {
                 self.emit(false, output)?;
