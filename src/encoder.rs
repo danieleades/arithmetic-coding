@@ -27,8 +27,30 @@ where
     M: Model,
 {
     /// Construct a new [`Encoder`]
+    ///
+    /// The 'precision' of the encoder is maximised, based on the number of bits
+    /// needed to represent the [`Model::denominator`]. 'precision' bits is
+    /// equal to [`u32::BITS`] - [`Model::denominator`] bits.
+    ///
+    /// # Panics
+    ///
+    /// The calculation of the number of bits used for 'precision' is subject to
+    /// the following constraints:
+    ///
+    /// - The total available bits is [`u32::BITS`]
+    /// - The precision must use at least 2 more bits than that needed to
+    ///   represent [`Model::denominator`]
+    ///
+    /// If these constraints cannot be satisfied this method will panic in debug
+    /// builds
     pub fn new(model: M) -> Self {
-        let precision = 32 - model.denominator().log2() + 1 - 2;
+        let frequency_bits = model.max_denominator().log2() + 1;
+        let minimum_precision = frequency_bits + 2;
+        debug_assert!(
+            (frequency_bits + minimum_precision) <= u32::BITS,
+            "not enough bits to guarantee overflow/underflow avoidance"
+        );
+        let precision = u32::BITS - frequency_bits;
 
         let low = 0;
         let high = 2u32.pow(precision as u32);
@@ -67,8 +89,6 @@ where
     }
 
     fn normalise<W: BitWrite>(&mut self, output: &mut W) -> io::Result<()> {
-        // this algorithm is derived from this article - https://marknelson.us/posts/2014/10/19/data-compression-with-arithmetic-coding.html
-
         while self.high < self.half() || self.low >= self.half() {
             if self.high < self.half() {
                 self.emit(false, output)?;

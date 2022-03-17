@@ -38,7 +38,7 @@ impl Model for MyModel {
         }
     }
 
-    fn denominator(&self) -> u32 {
+    fn max_denominator(&self) -> u32 {
         4
     }
 }
