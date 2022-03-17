@@ -46,13 +46,29 @@ where
 {
     /// Construct a new [`Decoder`]
     ///
+    /// The 'precision' of the encoder is maximised, based on the number of bits
+    /// needed to represent the [`Model::denominator`]. 'precision' bits is
+    /// equal to [`u32::BITS`] - [`Model::denominator`] bits.
+    ///
     /// # Errors
     ///
     /// This method can fail if the underlying [`BitRead`] cannot be read from.
+    ///
+    /// # Panics
+    ///
+    /// The calculation of the number of bits used for 'precision' is subject to
+    /// the following constraints:
+    ///
+    /// - The total available bits is [`u32::BITS`]
+    /// - The precision must use at least 2 more bits than that needed to
+    ///   represent [`Model::denominator`]
+    ///
+    /// If these constraints cannot be satisfied this method will panic in debug
+    /// builds
     pub fn new(model: M, input: R) -> io::Result<Self> {
         let frequency_bits = model.max_denominator().log2() + 1;
         let minimum_precision = frequency_bits + 2;
-        assert!(
+        debug_assert!(
             (frequency_bits + minimum_precision) <= u32::BITS,
             "not enough bits to guarantee overflow/underflow avoidance"
         );

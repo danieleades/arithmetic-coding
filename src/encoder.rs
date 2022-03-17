@@ -41,11 +41,12 @@ where
     /// - The precision must use at least 2 more bits than that needed to
     ///   represent [`Model::denominator`]
     ///
-    /// If these constraints cannot be satisfied this method will panic
+    /// If these constraints cannot be satisfied this method will panic in debug
+    /// builds
     pub fn new(model: M) -> Self {
         let frequency_bits = model.max_denominator().log2() + 1;
         let minimum_precision = frequency_bits + 2;
-        assert!(
+        debug_assert!(
             (frequency_bits + minimum_precision) <= u32::BITS,
             "not enough bits to guarantee overflow/underflow avoidance"
         );
