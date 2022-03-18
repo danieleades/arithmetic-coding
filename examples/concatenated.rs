@@ -97,11 +97,10 @@ fn main() {
 
     let mut symbol_encoder = Encoder::with_precision(symbolic::Model, PRECISION);
     symbol_encoder.encode(input1, &mut bitwriter).unwrap();
-    //symbol_encoder.flush(&mut bitwriter).unwrap();
 
     let mut integer_encoder = symbol_encoder.chain(integer::Model);
     integer_encoder.encode(input2, &mut bitwriter).unwrap();
-    //integer_encoder.flush(&mut bitwriter).unwrap();
+    integer_encoder.flush(&mut bitwriter).unwrap();
 
     bitwriter.byte_align().unwrap();
 

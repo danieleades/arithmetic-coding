@@ -151,7 +151,8 @@ where
         Ok(())
     }
 
-    fn flush<W: BitWrite>(&mut self, output: &mut W) -> io::Result<()> {
+    /// tmp
+    pub fn flush<W: BitWrite>(&mut self, output: &mut W) -> io::Result<()> {
         self.pending += 1;
         if self.low <= self.quarter() {
             self.emit(false, output)?;
@@ -177,7 +178,7 @@ where
             self.encode_symbol(Some(&symbol), output)?;
         }
         self.encode_symbol(None, output)?;
-        self.flush(output)?;
+        // self.flush(output)?;
         Ok(())
     }
 
@@ -193,7 +194,7 @@ where
             high: self.high,
             low: self.low,
             model,
-            pending: 0,
+            pending: self.pending,
             precision: self.precision,
         }
     }
