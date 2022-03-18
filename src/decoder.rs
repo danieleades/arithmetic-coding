@@ -167,6 +167,7 @@ where
         self.low += (range * p.start) / self.model.denominator();
 
         self.normalise()?;
+
         Ok(symbol)
     }
 

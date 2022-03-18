@@ -142,6 +142,7 @@ where
     }
 
     fn emit<W: BitWrite>(&mut self, bit: bool, output: &mut W) -> io::Result<()> {
+        println!("{}", bit);
         output.write_bit(bit)?;
         for _ in 0..self.pending {
             output.write_bit(!bit)?;
