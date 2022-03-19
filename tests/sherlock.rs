@@ -18,7 +18,7 @@ impl Model for StringModel {
     type Symbol = char;
     type ValueError = Error;
 
-    fn probability(&self, symbol: Option<&Self::Symbol>) -> Result<Range<u32>, Error> {
+    fn probability(&self, symbol: Option<&Self::Symbol>) -> Result<Range<Self::B>, Error> {
         if let Some(char) = symbol {
             match ALPHABET.chars().position(|x| &x == char) {
                 Some(index) => Ok((index as u32)..(index as u32 + 1)),
@@ -30,11 +30,11 @@ impl Model for StringModel {
         }
     }
 
-    fn symbol(&self, value: u32) -> Option<Self::Symbol> {
+    fn symbol(&self, value: Self::B) -> Option<Self::Symbol> {
         ALPHABET.chars().nth(value as usize)
     }
 
-    fn max_denominator(&self) -> u32 {
+    fn max_denominator(&self) -> Self::B {
         ALPHABET.len() as u32 + 1
     }
 }
@@ -46,25 +46,5 @@ fn round_trip_u32() {
     file.read_to_string(&mut string).unwrap();
     let input = string.chars().collect();
 
-    common::round_trip::<u32, _>(input, StringModel);
-}
-
-#[test]
-fn round_trip_u64() {
-    let mut file = File::open("./resources/sherlock.txt").unwrap();
-    let mut string = String::new();
-    file.read_to_string(&mut string).unwrap();
-    let input = string.chars().collect();
-
-    common::round_trip::<u64, _>(input, StringModel);
-}
-
-#[test]
-fn round_trip_u128() {
-    let mut file = File::open("./resources/sherlock.txt").unwrap();
-    let mut string = String::new();
-    file.read_to_string(&mut string).unwrap();
-    let input = string.chars().collect();
-
-    common::round_trip::<u128, _>(input, StringModel);
+    common::round_trip(input, StringModel);
 }

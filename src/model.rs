@@ -1,5 +1,7 @@
 use std::{error::Error, ops::Range};
 
+use crate::BitStore;
+
 /// A [`Model`] is used to calculate the probability of a given symbol occuring
 /// in a sequence. The [`Model`] is used both for encoding and decoding.
 ///
@@ -36,7 +38,7 @@ use std::{error::Error, ops::Range};
 ///         })
 ///     }
 ///
-///     fn symbol(&self, value: u32) -> Option<Self::Symbol> {
+///     fn symbol(&self, value: Self::B) -> Option<Self::Symbol> {
 ///         match value {
 ///             0..1 => None,
 ///             1..2 => Some(Symbol::A),
@@ -58,6 +60,9 @@ pub trait Model {
     /// Invalid symbol error
     type ValueError: Error;
 
+    /// The internal representation to use for storing integers
+    type B: BitStore = u32;
+
     /// Given a symbol, return an interval representing the probability of that
     /// symbol occurring.
     ///
@@ -74,7 +79,10 @@ pub trait Model {
     /// # Errors
     ///
     /// This returns a custom error if the given symbol is not valid
-    fn probability(&self, symbol: Option<&Self::Symbol>) -> Result<Range<u32>, Self::ValueError>;
+    fn probability(
+        &self,
+        symbol: Option<&Self::Symbol>,
+    ) -> Result<Range<Self::B>, Self::ValueError>;
 
     /// The denominator for probability ranges. See [`Model::probability`].
     ///
@@ -85,7 +93,7 @@ pub trait Model {
     /// [`Model::max_denominator`], or it becomes possible for the
     /// [`Encoder`](crate::Encoder) and [`Decoder`](crate::Decoder) to panic due
     /// to overflow or underflow.
-    fn denominator(&self) -> u32 {
+    fn denominator(&self) -> Self::B {
         self.max_denominator()
     }
 
@@ -95,14 +103,14 @@ pub trait Model {
     /// This value is used to calculate an appropriate precision for the
     /// encoding, therefore this value must not change, and
     /// [`Model::denominator`] must never exceed it.
-    fn max_denominator(&self) -> u32;
+    fn max_denominator(&self) -> Self::B;
 
     /// Given a value, return the symbol whose probability range it falls in.
     ///
     /// `None` indicates `EOF`
     ///
     /// This is the inverse of the [`Model::probability`] method
-    fn symbol(&self, value: u32) -> Option<Self::Symbol>;
+    fn symbol(&self, value: Self::B) -> Option<Self::Symbol>;
 
     /// Update the current state of the model with the latest symbol.
     ///

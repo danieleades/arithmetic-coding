@@ -23,22 +23,37 @@ pub trait BitStore:
 
     /// the multiplicative identity
     const ONE: Self;
+
+    /// integer natural logarithm, rounded down
+    fn log2(self) -> u32;
 }
 
 impl BitStore for u32 {
     const BITS: u32 = u32::BITS;
     const ONE: Self = 1;
     const ZERO: Self = 0;
+
+    fn log2(self) -> u32 {
+        u32::log2(self)
+    }
 }
 
 impl BitStore for u64 {
     const BITS: u32 = u64::BITS as u32;
     const ONE: Self = 1;
     const ZERO: Self = 0;
+
+    fn log2(self) -> u32 {
+        u64::log2(self)
+    }
 }
 
 impl BitStore for u128 {
     const BITS: u32 = u128::BITS as u32;
     const ONE: Self = 1;
     const ZERO: Self = 0;
+
+    fn log2(self) -> u32 {
+        u128::log2(self)
+    }
 }

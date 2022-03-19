@@ -1,15 +1,14 @@
-use arithmetic_coding::{BitStore, Decoder, Encoder, Model};
+use arithmetic_coding::{Decoder, Encoder, Model};
 use bitstream_io::{BigEndian, BitReader, BitWrite, BitWriter};
 
-pub fn round_trip<B, M>(input: Vec<M::Symbol>, model: M)
+pub fn round_trip<M>(input: Vec<M::Symbol>, model: M)
 where
-    B: BitStore,
     M: Model + Clone,
     M::Symbol: PartialEq + std::fmt::Debug + Clone,
 {
     let mut bitwriter = BitWriter::endian(Vec::new(), BigEndian);
 
-    let mut encoder = Encoder::<M, B>::with_bitstore(model.clone());
+    let mut encoder = Encoder::<M>::new(model.clone());
 
     encoder.encode(input.clone(), &mut bitwriter).unwrap();
     bitwriter.byte_align().unwrap();
@@ -24,6 +23,5 @@ where
         output.push(symbol);
     }
 
-    // assert_eq!(input, output);
-    panic!()
+    assert_eq!(input, output);
 }

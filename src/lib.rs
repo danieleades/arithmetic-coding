@@ -3,6 +3,7 @@
 #![deny(missing_docs, clippy::all, missing_debug_implementations)]
 #![warn(clippy::pedantic)]
 #![feature(int_log)]
+#![feature(associated_type_defaults)]
 
 mod model;
 pub use model::Model;

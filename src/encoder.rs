@@ -11,47 +11,19 @@ use crate::{util, BitStore, Error, Model};
 /// An arithmetic decoder converts a stream of symbols into a stream of bits,
 /// using a predictive [`Model`].
 #[derive(Debug)]
-pub struct Encoder<M, B = u32>
+pub struct Encoder<M>
 where
-    B: BitStore,
     M: Model,
 {
     model: M,
     precision: u32,
-    low: B,
-    high: B,
+    low: M::B,
+    high: M::B,
     pending: usize,
 }
 
-impl<M> Encoder<M, u32>
+impl<M> Encoder<M>
 where
-    M: Model,
-{
-    /// Construct a new [`Encoder`], using the default [`BitStore`] (`u32`).
-    ///
-    /// The 'precision' of the encoder is maximised, based on the number of bits
-    /// needed to represent the [`Model::denominator`]. 'precision' bits is
-    /// equal to [`u32::BITS`] - [`Model::denominator`] bits.
-    ///
-    /// # Panics
-    ///
-    /// The calculation of the number of bits used for 'precision' is subject to
-    /// the following constraints:
-    ///
-    /// - The total available bits is [`u32::BITS`]
-    /// - The precision must use at least 2 more bits than that needed to
-    ///   represent [`Model::denominator`]
-    ///
-    /// If these constraints cannot be satisfied this method will panic in debug
-    /// builds
-    pub fn new(model: M) -> Self {
-        Encoder::with_bitstore(model)
-    }
-}
-
-impl<M, B> Encoder<M, B>
-where
-    B: BitStore,
     M: Model,
 {
     /// Construct a new [`Encoder`] with a custom [`BitStore`].
@@ -71,12 +43,11 @@ where
     ///
     /// If these constraints cannot be satisfied this method will panic in debug
     /// builds
-    pub fn with_bitstore(model: M) -> Self {
-        let precision = util::precision::<B>(model.max_denominator());
-        dbg!(precision);
+    pub fn new(model: M) -> Self {
+        let precision = util::precision::<M::B>(model.max_denominator());
 
-        let low = B::ZERO;
-        let high = B::ONE << precision;
+        let low = M::B::ZERO;
+        let high = M::B::ONE << precision;
         let pending = 0;
 
         Self {
@@ -88,16 +59,16 @@ where
         }
     }
 
-    fn three_quarter(&self) -> B {
+    fn three_quarter(&self) -> M::B {
         self.half() + self.quarter()
     }
 
-    fn half(&self) -> B {
-        B::ONE << (self.precision - 1)
+    fn half(&self) -> M::B {
+        M::B::ONE << (self.precision - 1)
     }
 
-    fn quarter(&self) -> B {
-        B::ONE << (self.precision - 2)
+    fn quarter(&self) -> M::B {
+        M::B::ONE << (self.precision - 2)
     }
 
     fn encode_symbol<W: BitWrite>(
@@ -105,12 +76,11 @@ where
         symbol: Option<&M::Symbol>,
         output: &mut W,
     ) -> Result<(), Error<M::ValueError>> {
-        let range = self.high - self.low + B::ONE;
+        let range = self.high - self.low + M::B::ONE;
         let p = self.model.probability(symbol).map_err(Error::ValueError)?;
 
-        self.high =
-            self.low + (range * B::from(p.end)) / B::from(self.model.denominator()) - B::ONE;
-        self.low += (range * B::from(p.start)) / B::from(self.model.denominator());
+        self.high = self.low + (range * p.end) / self.model.denominator() - M::B::ONE;
+        self.low += (range * p.start) / self.model.denominator();
         self.model.update(symbol);
         self.normalise(output)?;
         Ok(())
