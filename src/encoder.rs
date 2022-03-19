@@ -26,11 +26,12 @@ impl<M> Encoder<M>
 where
     M: Model,
 {
-    /// Construct a new [`Encoder`] with a custom [`BitStore`].
+    /// Construct a new [`Encoder`].
     ///
     /// The 'precision' of the encoder is maximised, based on the number of bits
     /// needed to represent the [`Model::denominator`]. 'precision' bits is
-    /// equal to [`BitStore::BITS`] - [`Model::denominator`] bits.
+    /// equal to [`BitStore::BITS`] - [`Model::denominator`] bits. If you need
+    /// to set the precision manually, use [`Encoder::with_precision`].
     ///
     /// # Panics
     ///
@@ -45,23 +46,18 @@ where
     /// builds
     pub fn new(model: M) -> Self {
         let frequency_bits = model.max_denominator().log2() + 1;
-        let precision = u32::BITS - frequency_bits;
-
+        let precision = M::B::BITS - frequency_bits;
         Self::with_precision(model, precision)
     }
 
-    /// Construct a new [`Encoder`]
-    ///
-    /// The 'precision' of the encoder is maximised, based on the number of bits
-    /// needed to represent the [`Model::denominator`]. 'precision' bits is
-    /// equal to [`u32::BITS`] - [`Model::denominator`] bits.
+    /// Construct a new [`Encoder`] with a custom precision.
     ///
     /// # Panics
     ///
     /// The calculation of the number of bits used for 'precision' is subject to
     /// the following constraints:
     ///
-    /// - The total available bits is [`u32::BITS`]
+    /// - The total available bits is [`BitStore::BITS`]
     /// - The precision must use at least 2 more bits than that needed to
     ///   represent [`Model::denominator`]
     ///
@@ -70,12 +66,12 @@ where
     pub fn with_precision(model: M, precision: u32) -> Self {
         let frequency_bits = model.max_denominator().log2() + 1;
         debug_assert!(
-            precision >= (frequency_bits + 2),
-            "not enough bits of precision to guarantee overflow/underflow avoidance"
+            (precision >= (frequency_bits + 2)),
+            "not enough bits of precision to prevent overflow/underflow",
         );
         debug_assert!(
-            (frequency_bits + precision) <= u32::BITS,
-            "frequency bits + precision bits greater than maximum (32)"
+            (frequency_bits + precision) <= M::B::BITS,
+            "not enough bits in BitStore to support the required precision",
         );
 
         let low = M::B::ZERO;
@@ -142,7 +138,6 @@ where
     }
 
     fn emit<W: BitWrite>(&mut self, bit: bool, output: &mut W) -> io::Result<()> {
-        println!("{}", bit);
         output.write_bit(bit)?;
         for _ in 0..self.pending {
             output.write_bit(!bit)?;
@@ -151,8 +146,7 @@ where
         Ok(())
     }
 
-    /// tmp
-    pub fn flush<W: BitWrite>(&mut self, output: &mut W) -> io::Result<()> {
+    fn flush<W: BitWrite>(&mut self, output: &mut W) -> io::Result<()> {
         self.pending += 1;
         if self.low <= self.quarter() {
             self.emit(false, output)?;
@@ -178,24 +172,7 @@ where
             self.encode_symbol(Some(&symbol), output)?;
         }
         self.encode_symbol(None, output)?;
-        // self.flush(output)?;
+        self.flush(output)?;
         Ok(())
-    }
-
-    /// Chain this encoder with a new model
-    ///
-    /// Allows for concatenating different types of symbols together, without
-    /// needing to end on a whole bit.
-    ///
-    /// TODO: this method doesn't assert that the precision is appropriate for
-    /// the new model
-    pub fn chain<X>(self, model: X) -> Encoder<X> where X: Model<B = M::B> {
-        Encoder {
-            high: self.high,
-            low: self.low,
-            model,
-            pending: self.pending,
-            precision: self.precision,
-        }
     }
 }
