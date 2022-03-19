@@ -27,7 +27,7 @@ impl<M> Encoder<M, u32>
 where
     M: Model,
 {
-    /// Construct a new [`Encoder`],using the default [`BitStore`] (`u32`).
+    /// Construct a new [`Encoder`], using the default [`BitStore`] (`u32`).
     ///
     /// The 'precision' of the encoder is maximised, based on the number of bits
     /// needed to represent the [`Model::denominator`]. 'precision' bits is
@@ -54,25 +54,26 @@ where
     B: BitStore,
     M: Model,
 {
-    /// Construct a new [`Encoder`]
+    /// Construct a new [`Encoder`] with a custom [`BitStore`].
     ///
     /// The 'precision' of the encoder is maximised, based on the number of bits
     /// needed to represent the [`Model::denominator`]. 'precision' bits is
-    /// equal to [`u32::BITS`] - [`Model::denominator`] bits.
+    /// equal to [`BitStore::BITS`] - [`Model::denominator`] bits.
     ///
     /// # Panics
     ///
     /// The calculation of the number of bits used for 'precision' is subject to
     /// the following constraints:
     ///
-    /// - The total available bits is [`u32::BITS`]
+    /// - The total available bits is [`BitStore::BITS`]
     /// - The precision must use at least 2 more bits than that needed to
     ///   represent [`Model::denominator`]
     ///
     /// If these constraints cannot be satisfied this method will panic in debug
     /// builds
     pub fn with_bitstore(model: M) -> Self {
-        let precision = util::precision(model.max_denominator());
+        let precision = util::precision::<B>(model.max_denominator());
+        dbg!(precision);
 
         let low = B::ZERO;
         let high = B::ONE << precision;

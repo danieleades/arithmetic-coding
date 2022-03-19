@@ -2,7 +2,7 @@ use std::io;
 
 use bitstream_io::BitRead;
 
-use crate::{Error, Model};
+use crate::{BitStore, Error, Model};
 
 // this algorithm is derived from this article - https://marknelson.us/posts/2014/10/19/data-compression-with-arithmetic-coding.html
 
@@ -11,17 +11,18 @@ use crate::{Error, Model};
 /// An arithmetic decoder converts a stream of bytes into a stream of some
 /// output symbol, using a predictive [`Model`].
 #[derive(Debug)]
-pub struct Decoder<M, R>
+pub struct Decoder<M, R, B = u32>
 where
+    B: BitStore,
     M: Model,
     R: BitRead,
 {
     model: M,
     precision: u32,
-    low: u32,
-    high: u32,
+    low: B,
+    high: B,
     input: R,
-    x: u32,
+    x: B,
 }
 
 trait BitReadExt {
@@ -38,11 +39,11 @@ impl<R: BitRead> BitReadExt for R {
     }
 }
 
-impl<M, R> Decoder<M, R>
+impl<M, R, B> Decoder<M, R, B>
 where
     M: Model,
     R: BitRead,
-    M::Symbol: std::fmt::Debug,
+    B: BitStore,
 {
     /// Construct a new [`Decoder`]
     ///
@@ -74,10 +75,10 @@ where
         );
         let precision = u32::BITS - frequency_bits;
 
-        let low = 0;
-        let high = 1 << precision;
+        let low = B::ZERO;
+        let high = B::ONE << precision;
 
-        let x = 0;
+        let x = B::ZERO;
 
         let mut encoder = Self {
             model,
@@ -117,8 +118,9 @@ where
     ///
     /// This method can fail if the underlying [`BitRead`] cannot be read from.
     pub fn decode_symbol(&mut self) -> Result<Option<M::Symbol>, Error<M::ValueError>> {
-        let range = self.high - self.low + 1;
-        let value = ((self.x - self.low + 1) * self.model.denominator() - 1) / range;
+        let range = self.high - self.low + B::ONE;
+        let value =
+            ((self.x - self.low + B::ONE) * B::from(self.model.denominator()) - B::ONE) / range;
         let symbol = self.model.symbol(value);
 
         let p = self

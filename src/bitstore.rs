@@ -27,6 +27,18 @@ pub trait BitStore:
 
 impl BitStore for u32 {
     const BITS: u32 = u32::BITS;
-    const ONE: Self = 1_u32;
-    const ZERO: Self = 0_u32;
+    const ONE: Self = 1;
+    const ZERO: Self = 0;
+}
+
+impl BitStore for u64 {
+    const BITS: u32 = u64::BITS as u32;
+    const ONE: Self = 1;
+    const ZERO: Self = 0;
+}
+
+impl BitStore for u128 {
+    const BITS: u32 = u128::BITS as u32;
+    const ONE: Self = 1;
+    const ZERO: Self = 0;
 }
