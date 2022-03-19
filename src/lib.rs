@@ -1,6 +1,6 @@
 //! Arithmetic coding library
 
-#![deny(missing_docs, clippy::all, missing_debug_implementations)]
+#![deny(missing_docs, clippy::all, missing_debug_implementations, clippy::cargo)]
 #![warn(clippy::pedantic)]
 #![feature(int_log)]
 #![feature(associated_type_defaults)]

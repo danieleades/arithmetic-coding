@@ -1,9 +1,12 @@
 [package]
 name = "arithmetic-coding"
+description = "fast and felxible arithmetic coding library"
 version = "0.1.0"
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+license = "MIT"
+keywords = ["compression", "encoding", "arithmetic-coding", "lossless"]
+categories = ["compression", "encoding", "parsing"]
+repository = "https://github.com/danieleades/arithmetic-coding"
 
 [dependencies]
 bitstream-io = "1.2.0"
