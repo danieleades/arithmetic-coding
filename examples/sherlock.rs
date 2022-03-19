@@ -60,7 +60,7 @@ fn main() {
     let mut encoder = Encoder::new(model.clone());
 
     println!("encoding...");
-    encoder.encode(input.chars(), &mut bitwriter).unwrap();
+    encoder.encode_all(input.chars(), &mut bitwriter).unwrap();
     bitwriter.byte_align().unwrap();
 
     let buffer = bitwriter.into_writer();

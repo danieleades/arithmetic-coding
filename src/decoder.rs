@@ -2,7 +2,7 @@ use std::io;
 
 use bitstream_io::BitRead;
 
-use crate::{util, BitStore, Error, Model};
+use crate::{BitStore, Error, Model};
 
 // this algorithm is derived from this article - https://marknelson.us/posts/2014/10/19/data-compression-with-arithmetic-coding.html
 
@@ -65,7 +65,39 @@ where
     /// If these constraints cannot be satisfied this method will panic in debug
     /// builds
     pub fn new(model: M, input: R) -> io::Result<Self> {
-        let precision = util::precision(model.max_denominator());
+        let frequency_bits = model.max_denominator().log2() + 1;
+        let precision = M::B::BITS - frequency_bits;
+
+        Self::with_precision(model, input, precision)
+    }
+
+    /// Construct a new [`Decoder`] with a custom precision
+    ///
+    /// # Errors
+    ///
+    /// This method can fail if the underlying [`BitRead`] cannot be read from.
+    ///
+    /// # Panics
+    ///
+    /// The calculation of the number of bits used for 'precision' is subject to
+    /// the following constraints:
+    ///
+    /// - The total available bits is [`BitStore::BITS`]
+    /// - The precision must use at least 2 more bits than that needed to
+    ///   represent [`Model::denominator`]
+    ///
+    /// If these constraints cannot be satisfied this method will panic in debug
+    /// builds
+    pub fn with_precision(model: M, input: R, precision: u32) -> io::Result<Self> {
+        let frequency_bits = model.max_denominator().log2() + 1;
+        debug_assert!(
+            (precision >= (frequency_bits + 2)),
+            "not enough bits of precision to prevent overflow/underflow",
+        );
+        debug_assert!(
+            (frequency_bits + precision) <= M::B::BITS,
+            "not enough bits in BitStore to support the required precision",
+        );
 
         let low = M::B::ZERO;
         let high = M::B::ONE << precision;
@@ -169,5 +201,23 @@ where
         }
 
         Ok(())
+    }
+
+    /// Reuse the internal state of the Decoder with a new model.
+    ///
+    /// Allows for chaining multiple sequences of symbols from a single stream
+    /// of bits
+    pub fn chain<X>(self, model: X) -> Decoder<X, R>
+    where
+        X: Model<B = M::B>,
+    {
+        Decoder {
+            model,
+            precision: self.precision,
+            low: self.low,
+            high: self.high,
+            input: self.input,
+            x: self.x,
+        }
     }
 }

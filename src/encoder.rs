@@ -2,7 +2,7 @@ use std::io;
 
 use bitstream_io::BitWrite;
 
-use crate::{util, BitStore, Error, Model};
+use crate::{BitStore, Error, Model};
 
 // this algorithm is derived from this article - https://marknelson.us/posts/2014/10/19/data-compression-with-arithmetic-coding.html
 
@@ -26,11 +26,12 @@ impl<M> Encoder<M>
 where
     M: Model,
 {
-    /// Construct a new [`Encoder`] with a custom [`BitStore`].
+    /// Construct a new [`Encoder`].
     ///
     /// The 'precision' of the encoder is maximised, based on the number of bits
     /// needed to represent the [`Model::denominator`]. 'precision' bits is
-    /// equal to [`BitStore::BITS`] - [`Model::denominator`] bits.
+    /// equal to [`BitStore::BITS`] - [`Model::denominator`] bits. If you need
+    /// to set the precision manually, use [`Encoder::with_precision`].
     ///
     /// # Panics
     ///
@@ -44,7 +45,34 @@ where
     /// If these constraints cannot be satisfied this method will panic in debug
     /// builds
     pub fn new(model: M) -> Self {
-        let precision = util::precision::<M::B>(model.max_denominator());
+        let frequency_bits = model.max_denominator().log2() + 1;
+        let precision = M::B::BITS - frequency_bits;
+        Self::with_precision(model, precision)
+    }
+
+    /// Construct a new [`Encoder`] with a custom precision.
+    ///
+    /// # Panics
+    ///
+    /// The calculation of the number of bits used for 'precision' is subject to
+    /// the following constraints:
+    ///
+    /// - The total available bits is [`BitStore::BITS`]
+    /// - The precision must use at least 2 more bits than that needed to
+    ///   represent [`Model::denominator`]
+    ///
+    /// If these constraints cannot be satisfied this method will panic in debug
+    /// builds
+    pub fn with_precision(model: M, precision: u32) -> Self {
+        let frequency_bits = model.max_denominator().log2() + 1;
+        debug_assert!(
+            (precision >= (frequency_bits + 2)),
+            "not enough bits of precision to prevent overflow/underflow",
+        );
+        debug_assert!(
+            (frequency_bits + precision) <= M::B::BITS,
+            "not enough bits in BitStore to support the required precision",
+        );
 
         let low = M::B::ZERO;
         let high = M::B::ONE << precision;
@@ -59,6 +87,28 @@ where
         }
     }
 
+    /// Encode a stream of symbols into the provided output.
+    ///
+    /// This method will encode all the symbols in the iterator, followed by EOF
+    /// (`None`), and then call [`Encoder::flush`].
+    ///
+    /// # Errors
+    ///
+    /// This method can fail if the underlying [`BitWrite`] cannot be written
+    /// to.
+    pub fn encode_all<W: BitWrite>(
+        &mut self,
+        symbols: impl IntoIterator<Item = M::Symbol>,
+        output: &mut W,
+    ) -> Result<(), Error<M::ValueError>> {
+        for symbol in symbols {
+            self.encode(Some(&symbol), output)?;
+        }
+        self.encode(None, output)?;
+        self.flush(output)?;
+        Ok(())
+    }
+
     fn three_quarter(&self) -> M::B {
         self.half() + self.quarter()
     }
@@ -71,7 +121,18 @@ where
         M::B::ONE << (self.precision - 2)
     }
 
-    fn encode_symbol<W: BitWrite>(
+    /// Encode a symbol into the provided output.
+    ///
+    /// When you finish encoding symbols, you must manually encode an EOF symbol
+    /// by calling [`Encoder::encode`] with `None`.
+    ///
+    /// The internal buffer must be manually flushed using [`Encoder::flush`].
+    ///
+    /// # Errors
+    ///
+    /// This method can fail if the underlying [`BitWrite`] cannot be written
+    /// to.
+    pub fn encode<W: BitWrite>(
         &mut self,
         symbol: Option<&M::Symbol>,
         output: &mut W,
@@ -118,7 +179,17 @@ where
         Ok(())
     }
 
-    fn flush<W: BitWrite>(&mut self, output: &mut W) -> io::Result<()> {
+    /// Flush any pending bits from the buffer
+    ///
+    /// This method must be called when you finish writing symbols to a stream
+    /// of bits. This is called automatically when you use
+    /// [`Encoder::encode_all`].
+    ///
+    /// # Errors
+    ///
+    /// This method can fail if the underlying [`BitWrite`] cannot be written
+    /// to.
+    pub fn flush<W: BitWrite>(&mut self, output: &mut W) -> io::Result<()> {
         self.pending += 1;
         if self.low <= self.quarter() {
             self.emit(false, output)?;
@@ -129,22 +200,20 @@ where
         Ok(())
     }
 
-    /// Encode a stream of symbols into the provided output
+    /// Reuse the internal state of the Encoder with a new model.
     ///
-    /// # Errors
-    ///
-    /// This method can fail if the underlying [`BitWrite`] cannot be written
-    /// to.
-    pub fn encode<W: BitWrite>(
-        &mut self,
-        symbols: impl IntoIterator<Item = M::Symbol>,
-        output: &mut W,
-    ) -> Result<(), Error<M::ValueError>> {
-        for symbol in symbols {
-            self.encode_symbol(Some(&symbol), output)?;
+    /// Allows for chaining multiple sequences of symbols into a single stream
+    /// of bits
+    pub fn chain<X>(self, model: X) -> Encoder<X>
+    where
+        X: Model<B = M::B>,
+    {
+        Encoder {
+            model,
+            precision: self.precision,
+            low: self.low,
+            high: self.high,
+            pending: self.pending,
         }
-        self.encode_symbol(None, output)?;
-        self.flush(output)?;
-        Ok(())
     }
 }
