@@ -75,7 +75,7 @@ where
         let precision = u32::BITS - frequency_bits;
 
         let low = 0;
-        let high = 2u32.pow(precision as u32);
+        let high = 1 << precision;
 
         let x = 0;
 
@@ -102,11 +102,11 @@ where
     }
 
     const fn half(&self) -> u32 {
-        2u32.pow(self.precision as u32 - 1)
+        1 << (self.precision - 1)
     }
 
     const fn quarter(&self) -> u32 {
-        2u32.pow(self.precision as u32 - 2)
+        1 << (self.precision - 2)
     }
 
     /// Read the next symbol from the stream of bits
@@ -136,9 +136,9 @@ where
     fn normalise(&mut self) -> io::Result<()> {
         while self.high < self.half() || self.low >= self.half() {
             if self.high < self.half() {
-                self.high *= 2;
-                self.low *= 2;
-                self.x *= 2;
+                self.high <<= 1;
+                self.low <<= 1;
+                self.x <<= 1;
             } else {
                 // self.low >= self.half()
                 self.low = 2 * (self.low - self.half());
