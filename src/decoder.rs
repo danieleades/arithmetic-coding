@@ -202,4 +202,22 @@ where
 
         Ok(())
     }
+
+    /// Reuse the internal state of the Decoder with a new model.
+    ///
+    /// Allows for chaining multiple sequences of symbols from a single stream
+    /// of bits
+    pub fn chain<X>(self, model: X) -> Decoder<X, R>
+    where
+        X: Model<B = M::B>,
+    {
+        Decoder {
+            model,
+            precision: self.precision,
+            low: self.low,
+            high: self.high,
+            input: self.input,
+            x: self.x,
+        }
+    }
 }

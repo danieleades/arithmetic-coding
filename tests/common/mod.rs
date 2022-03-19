@@ -10,7 +10,7 @@ where
 
     let mut encoder = Encoder::<M>::new(model.clone());
 
-    encoder.encode(input.clone(), &mut bitwriter).unwrap();
+    encoder.encode_all(input.clone(), &mut bitwriter).unwrap();
     bitwriter.byte_align().unwrap();
 
     let buffer = bitwriter.into_writer();

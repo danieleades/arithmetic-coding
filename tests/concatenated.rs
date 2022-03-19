@@ -44,7 +44,7 @@ mod integer {
 mod symbolic {
     use std::ops::Range;
 
-    #[derive(Debug)]
+    #[derive(Debug, PartialEq)]
     pub enum Symbol {
         A,
         B,
@@ -97,14 +97,43 @@ fn test() {
     println!("encoding...");
 
     let mut symbol_encoder = Encoder::with_precision(symbolic::Model, PRECISION);
-    symbol_encoder.encode(input1, &mut bitwriter).unwrap();
+    for symbol in &input1 {
+        symbol_encoder.encode(Some(symbol), &mut bitwriter).unwrap();
+    }
+    symbol_encoder.encode(None, &mut bitwriter).unwrap();
 
     let mut integer_encoder = symbol_encoder.chain(integer::Model);
-    integer_encoder.encode(input2, &mut bitwriter).unwrap();
+
+    for symbol in &input2 {
+        integer_encoder
+            .encode(Some(symbol), &mut bitwriter)
+            .unwrap();
+    }
+    integer_encoder.encode(None, &mut bitwriter).unwrap();
+    integer_encoder.flush(&mut bitwriter).unwrap();
 
     bitwriter.byte_align().unwrap();
 
     let buffer = bitwriter.into_writer();
 
-    println!("buffer: {:?}", &buffer);
+    let bitreader = BitReader::endian(buffer.as_slice(), BigEndian);
+
+    let mut symbol_decoder =
+        Decoder::with_precision(symbolic::Model, bitreader, PRECISION).unwrap();
+
+    let mut output1 = Vec::default();
+    while let Some(symbol) = symbol_decoder.decode_symbol().unwrap() {
+        output1.push(symbol);
+    }
+
+    assert_eq!(&input1, output1.as_slice());
+
+    let mut output2 = Vec::default();
+    let mut integer_decoder = symbol_decoder.chain(integer::Model);
+
+    while let Some(symbol) = integer_decoder.decode_symbol().unwrap() {
+        output2.push(symbol);
+    }
+
+    assert_eq!(&input2, output2.as_slice());
 }

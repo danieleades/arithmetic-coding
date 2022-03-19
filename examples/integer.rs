@@ -48,7 +48,7 @@ fn main() {
     let mut encoder = Encoder::new(MyModel);
 
     println!("encoding...");
-    encoder.encode(input, &mut bitwriter).unwrap();
+    encoder.encode_all(input, &mut bitwriter).unwrap();
     bitwriter.byte_align().unwrap();
 
     let buffer = bitwriter.into_writer();

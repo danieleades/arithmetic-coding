@@ -96,10 +96,19 @@ fn main() {
     println!("encoding...");
 
     let mut symbol_encoder = Encoder::with_precision(symbolic::Model, PRECISION);
-    symbol_encoder.encode(input1, &mut bitwriter).unwrap();
+    for symbol in &input1 {
+        symbol_encoder.encode(Some(symbol), &mut bitwriter).unwrap();
+    }
+    symbol_encoder.encode(None, &mut bitwriter).unwrap();
 
     let mut integer_encoder = symbol_encoder.chain(integer::Model);
-    integer_encoder.encode(input2, &mut bitwriter).unwrap();
+
+    for symbol in &input2 {
+        integer_encoder
+            .encode(Some(symbol), &mut bitwriter)
+            .unwrap();
+    }
+    integer_encoder.encode(None, &mut bitwriter).unwrap();
     integer_encoder.flush(&mut bitwriter).unwrap();
 
     bitwriter.byte_align().unwrap();
@@ -114,12 +123,12 @@ fn main() {
         Decoder::with_precision(symbolic::Model, bitreader, PRECISION).unwrap();
 
     while let Some(symbol) = symbol_decoder.decode_symbol().unwrap() {
-        dbg!(symbol);
+        println!("{:?}", symbol);
     }
 
     let mut integer_decoder = symbol_decoder.chain(integer::Model);
 
     while let Some(symbol) = integer_decoder.decode_symbol().unwrap() {
-        dbg!(symbol);
+        println!("{:?}", symbol);
     }
 }

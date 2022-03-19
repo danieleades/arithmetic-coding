@@ -87,6 +87,28 @@ where
         }
     }
 
+    /// Encode a stream of symbols into the provided output.
+    ///
+    /// This method will encode all the symbols in the iterator, followed by EOF
+    /// (`None`), and then call [`Encoder::flush`].
+    ///
+    /// # Errors
+    ///
+    /// This method can fail if the underlying [`BitWrite`] cannot be written
+    /// to.
+    pub fn encode_all<W: BitWrite>(
+        &mut self,
+        symbols: impl IntoIterator<Item = M::Symbol>,
+        output: &mut W,
+    ) -> Result<(), Error<M::ValueError>> {
+        for symbol in symbols {
+            self.encode(Some(&symbol), output)?;
+        }
+        self.encode(None, output)?;
+        self.flush(output)?;
+        Ok(())
+    }
+
     fn three_quarter(&self) -> M::B {
         self.half() + self.quarter()
     }
@@ -99,7 +121,18 @@ where
         M::B::ONE << (self.precision - 2)
     }
 
-    fn encode_symbol<W: BitWrite>(
+    /// Encode a symbol into the provided output.
+    ///
+    /// When you finish encoding symbols, you must manually encode an EOF symbol
+    /// by calling [`Encoder::encode`] with `None`.
+    ///
+    /// The internal buffer must be manually flushed using [`Encoder::flush`].
+    ///
+    /// # Errors
+    ///
+    /// This method can fail if the underlying [`BitWrite`] cannot be written
+    /// to.
+    pub fn encode<W: BitWrite>(
         &mut self,
         symbol: Option<&M::Symbol>,
         output: &mut W,
@@ -146,7 +179,17 @@ where
         Ok(())
     }
 
-    fn flush<W: BitWrite>(&mut self, output: &mut W) -> io::Result<()> {
+    /// Flush any pending bits from the buffer
+    ///
+    /// This method must be called when you finish writing symbols to a stream
+    /// of bits. This is called automatically when you use
+    /// [`Encoder::encode_all`].
+    ///
+    /// # Errors
+    ///
+    /// This method can fail if the underlying [`BitWrite`] cannot be written
+    /// to.
+    pub fn flush<W: BitWrite>(&mut self, output: &mut W) -> io::Result<()> {
         self.pending += 1;
         if self.low <= self.quarter() {
             self.emit(false, output)?;
@@ -157,22 +200,20 @@ where
         Ok(())
     }
 
-    /// Encode a stream of symbols into the provided output
+    /// Reuse the internal state of the Encoder with a new model.
     ///
-    /// # Errors
-    ///
-    /// This method can fail if the underlying [`BitWrite`] cannot be written
-    /// to.
-    pub fn encode<W: BitWrite>(
-        &mut self,
-        symbols: impl IntoIterator<Item = M::Symbol>,
-        output: &mut W,
-    ) -> Result<(), Error<M::ValueError>> {
-        for symbol in symbols {
-            self.encode_symbol(Some(&symbol), output)?;
+    /// Allows for chaining multiple sequences of symbols into a single stream
+    /// of bits
+    pub fn chain<X>(self, model: X) -> Encoder<X>
+    where
+        X: Model<B = M::B>,
+    {
+        Encoder {
+            model,
+            precision: self.precision,
+            low: self.low,
+            high: self.high,
+            pending: self.pending,
         }
-        self.encode_symbol(None, output)?;
-        self.flush(output)?;
-        Ok(())
     }
 }
