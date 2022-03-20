@@ -1,6 +1,11 @@
 #![feature(exclusive_range_pattern)]
 #![feature(never_type)]
 
+use arithmetic_coding::{Decoder, Encoder, Model};
+use bitstream_io::{BigEndian, BitRead, BitReader, BitWrite, BitWriter};
+
+const PRECISION: u32 = 12;
+
 mod integer {
 
     use std::ops::Range;
@@ -83,52 +88,94 @@ mod symbolic {
 }
 
 fn main() {
-    const PRECISION: u32 = 12;
-    use arithmetic_coding::{Decoder, Encoder};
-    use bitstream_io::{BigEndian, BitReader, BitWrite, BitWriter};
     use symbolic::Symbol;
 
     let input1 = [Symbol::A, Symbol::B, Symbol::C];
-    let input2 = [2, 1, 1, 2, 2];
+    println!("input1: {:?}", input1);
 
+    let input2 = [2, 1, 1, 2, 2];
+    println!("input2: {:?}", input2);
+
+    println!("\nencoding...");
+
+    let buffer = encode2(symbolic::Model, &input1, integer::Model, &input2);
+
+    println!("\nbuffer: {:?}", &buffer);
+
+    println!("\ndecoding...");
+    let (output1, output2) = decode2(symbolic::Model, integer::Model, &buffer);
+
+    for symbol in output1 {
+        println!("{:?}", symbol);
+    }
+    for symbol in output2 {
+        println!("{:?}", symbol);
+    }
+}
+
+/// Encode two sets of symbols in sequence
+fn encode2<M, N>(model1: M, input1: &[M::Symbol], model2: N, input2: &[N::Symbol]) -> Vec<u8>
+where
+    M: Model<B = N::B>,
+    N: Model,
+{
     let mut bitwriter = BitWriter::endian(Vec::default(), BigEndian);
 
-    println!("encoding...");
+    let mut encoder1 = Encoder::with_precision(model1, PRECISION);
+    encode(&mut encoder1, input1, &mut bitwriter);
 
-    let mut symbol_encoder = Encoder::with_precision(symbolic::Model, PRECISION);
-    for symbol in &input1 {
-        symbol_encoder.encode(Some(symbol), &mut bitwriter).unwrap();
-    }
-    symbol_encoder.encode(None, &mut bitwriter).unwrap();
+    let mut encoder2 = encoder1.chain(model2);
+    encode(&mut encoder2, input2, &mut bitwriter);
 
-    let mut integer_encoder = symbol_encoder.chain(integer::Model);
-
-    for symbol in &input2 {
-        integer_encoder
-            .encode(Some(symbol), &mut bitwriter)
-            .unwrap();
-    }
-    integer_encoder.encode(None, &mut bitwriter).unwrap();
-    integer_encoder.flush(&mut bitwriter).unwrap();
+    encoder2.flush(&mut bitwriter).unwrap();
 
     bitwriter.byte_align().unwrap();
+    bitwriter.into_writer()
+}
 
-    let buffer = bitwriter.into_writer();
+/// Encode all symbols, followed by EOF. Doesn't flush the encoder (allowing
+/// more bits to be concatenated)
+fn encode<M, W>(encoder: &mut Encoder<M>, input: &[M::Symbol], bitwriter: &mut W)
+where
+    M: Model,
+    W: BitWrite,
+{
+    for symbol in input {
+        encoder.encode(Some(symbol), bitwriter).unwrap();
+    }
+    encoder.encode(None, bitwriter).unwrap();
+}
 
-    println!("buffer: {:?}", &buffer);
+/// Decode two sets of symbols, in sequence
+fn decode2<M, N>(model1: M, model2: N, buffer: &[u8]) -> (Vec<M::Symbol>, Vec<N::Symbol>)
+where
+    M: Model<B = N::B>,
+    N: Model,
+{
+    let bitreader = BitReader::endian(buffer, BigEndian);
 
-    let bitreader = BitReader::endian(buffer.as_slice(), BigEndian);
+    let mut decoder1 = Decoder::with_precision(model1, bitreader, PRECISION).unwrap();
 
-    let mut symbol_decoder =
-        Decoder::with_precision(symbolic::Model, bitreader, PRECISION).unwrap();
+    let output1 = decode(&mut decoder1);
 
-    while let Some(symbol) = symbol_decoder.decode_symbol().unwrap() {
-        println!("{:?}", symbol);
+    let mut decoder2 = decoder1.chain(model2);
+
+    let output2 = decode(&mut decoder2);
+
+    (output1, output2)
+}
+
+/// Decode all symbols from a [`Decoder`] until EOF is reached
+fn decode<M, R>(decoder: &mut Decoder<M, R>) -> Vec<M::Symbol>
+where
+    M: Model,
+    R: BitRead,
+{
+    let mut output = Vec::default();
+
+    while let Some(symbol) = decoder.decode_symbol().unwrap() {
+        output.push(symbol);
     }
 
-    let mut integer_decoder = symbol_decoder.chain(integer::Model);
-
-    while let Some(symbol) = integer_decoder.decode_symbol().unwrap() {
-        println!("{:?}", symbol);
-    }
+    output
 }

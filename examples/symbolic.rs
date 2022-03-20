@@ -3,8 +3,9 @@
 
 use std::ops::Range;
 
-use arithmetic_coding::{Decoder, Encoder, Model};
-use bitstream_io::{BigEndian, BitReader, BitWrite, BitWriter};
+use arithmetic_coding::Model;
+
+mod common;
 
 #[derive(Debug)]
 pub enum Symbol {
@@ -13,6 +14,7 @@ pub enum Symbol {
     C,
 }
 
+#[derive(Clone)]
 pub struct MyModel;
 
 impl Model for MyModel {
@@ -44,25 +46,5 @@ impl Model for MyModel {
 }
 
 fn main() {
-    let input = [Symbol::A, Symbol::B, Symbol::C];
-
-    let output = Vec::default();
-    let mut bitwriter = BitWriter::endian(output, BigEndian);
-    let mut encoder = Encoder::new(MyModel);
-
-    println!("encoding...");
-    encoder.encode_all(input, &mut bitwriter).unwrap();
-    bitwriter.byte_align().unwrap();
-
-    let buffer = bitwriter.into_writer();
-
-    println!("buffer: {:?}", &buffer);
-
-    let bitreader = BitReader::endian(buffer.as_slice(), BigEndian);
-
-    println!("\ndecoding...");
-    let mut decoder = Decoder::new(MyModel, bitreader).unwrap();
-    while let Some(symbol) = decoder.decode_symbol().unwrap() {
-        dbg!(symbol);
-    }
+    common::round_trip(MyModel, vec![Symbol::A, Symbol::B, Symbol::C]);
 }

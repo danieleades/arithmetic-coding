@@ -3,8 +3,9 @@
 
 use std::ops::Range;
 
-use arithmetic_coding::{fixed_length, Decoder, Encoder};
-use bitstream_io::{BigEndian, BitReader, BitWrite, BitWriter};
+use arithmetic_coding::fixed_length;
+
+mod common;
 
 #[derive(Debug)]
 pub enum Symbol {
@@ -47,27 +48,8 @@ impl fixed_length::Model for MyModel {
 }
 
 fn main() {
-    let input = [Symbol::A, Symbol::B, Symbol::C];
-
+    let input = vec![Symbol::A, Symbol::B, Symbol::C];
     let model = fixed_length::Wrapper::new(MyModel);
 
-    let output = Vec::default();
-    let mut bitwriter = BitWriter::endian(output, BigEndian);
-    let mut encoder = Encoder::new(model.clone());
-
-    println!("encoding...");
-    encoder.encode_all(input, &mut bitwriter).unwrap();
-    bitwriter.byte_align().unwrap();
-
-    let buffer = bitwriter.into_writer();
-
-    println!("buffer: {:?}", &buffer);
-
-    let bitreader = BitReader::endian(buffer.as_slice(), BigEndian);
-
-    println!("\ndecoding...");
-    let mut decoder = Decoder::new(model, bitreader).unwrap();
-    while let Some(symbol) = decoder.decode_symbol().unwrap() {
-        dbg!(symbol);
-    }
+    common::round_trip(model, input);
 }

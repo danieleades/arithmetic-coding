@@ -1,20 +1,29 @@
 use arithmetic_coding::{Decoder, Encoder, Model};
 use bitstream_io::{BigEndian, BitReader, BitWrite, BitWriter};
 
+#[allow(unused)]
 pub fn round_trip<M>(model: M, input: Vec<M::Symbol>)
 where
     M: Model + Clone,
-    M::Symbol: PartialEq + std::fmt::Debug + Clone,
+    M::Symbol: std::fmt::Debug,
 {
-    let buffer = encode(model.clone(), input.clone());
-    let output = decode(model, &buffer);
+    println!("input: {:?}", &input);
 
-    assert_eq!(input, output);
+    println!("\nencoding...");
+    let buffer = encode(model.clone(), input);
+
+    println!("buffer: {:?}", &buffer);
+
+    println!("\ndecoding...");
+    for symbol in decode(model, &buffer) {
+        println!("{:?}", symbol);
+    }
 }
 
-fn encode<M>(model: M, input: Vec<M::Symbol>) -> Vec<u8>
+pub fn encode<M, I>(model: M, input: I) -> Vec<u8>
 where
     M: Model,
+    I: IntoIterator<Item = M::Symbol>,
 {
     let mut bitwriter = BitWriter::endian(Vec::new(), BigEndian);
     let mut encoder = Encoder::<M>::new(model);
@@ -25,7 +34,7 @@ where
     bitwriter.into_writer()
 }
 
-fn decode<M>(model: M, buffer: &[u8]) -> Vec<M::Symbol>
+pub fn decode<M>(model: M, buffer: &[u8]) -> Vec<M::Symbol>
 where
     M: Model,
 {
