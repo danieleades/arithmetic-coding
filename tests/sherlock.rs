@@ -46,5 +46,5 @@ fn round_trip() {
     file.read_to_string(&mut string).unwrap();
     let input = string.chars().collect();
 
-    common::round_trip(input, StringModel);
+    common::round_trip(StringModel, input);
 }

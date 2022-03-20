@@ -51,7 +51,7 @@ impl fixed_length::Model for MyModel {
 fn round_trip() {
     let input = vec![Symbol::A, Symbol::B, Symbol::C];
 
-    common::round_trip(input, fixed_length::Wrapper::new(MyModel));
+    common::round_trip(fixed_length::Wrapper::new(MyModel), input);
 }
 
 #[test]
@@ -67,5 +67,5 @@ fn round_trip_fail() {
         Symbol::C,
     ];
 
-    common::round_trip(input, fixed_length::Wrapper::new(MyModel));
+    common::round_trip(fixed_length::Wrapper::new(MyModel), input);
 }
