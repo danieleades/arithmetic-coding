@@ -1,6 +1,11 @@
 //! Arithmetic coding library
 
-#![deny(missing_docs, clippy::all, missing_debug_implementations, clippy::cargo)]
+#![deny(
+    missing_docs,
+    clippy::all,
+    missing_debug_implementations,
+    clippy::cargo
+)]
 #![warn(clippy::pedantic)]
 #![feature(int_log)]
 #![feature(associated_type_defaults)]
@@ -16,6 +21,8 @@ pub use decoder::Decoder;
 
 mod bitstore;
 pub use bitstore::BitStore;
+
+pub mod fixed_length;
 
 /// Errors that can occur during encoding/decoding
 #[derive(Debug, thiserror::Error)]

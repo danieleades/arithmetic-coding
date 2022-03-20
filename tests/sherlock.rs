@@ -40,7 +40,7 @@ impl Model for StringModel {
 }
 
 #[test]
-fn round_trip_u32() {
+fn round_trip() {
     let mut file = File::open("./resources/sherlock.txt").unwrap();
     let mut string = String::new();
     file.read_to_string(&mut string).unwrap();

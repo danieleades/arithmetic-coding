@@ -162,6 +162,7 @@ where
         self.high = self.low + (range * p.end) / self.model.denominator() - M::B::ONE;
         self.low += (range * p.start) / self.model.denominator();
 
+        self.model.update(symbol.as_ref());
         self.normalise()?;
         Ok(symbol)
     }
