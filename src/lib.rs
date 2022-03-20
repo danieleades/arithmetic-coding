@@ -22,6 +22,8 @@ pub use decoder::Decoder;
 mod bitstore;
 pub use bitstore::BitStore;
 
+pub mod fixed_length;
+
 /// Errors that can occur during encoding/decoding
 #[derive(Debug, thiserror::Error)]
 pub enum Error<E> {
