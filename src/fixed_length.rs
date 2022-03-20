@@ -5,7 +5,12 @@ use std::ops::Range;
 use crate::BitStore;
 
 /// A [`Model`] is used to calculate the probability of a given symbol occuring
-/// in a sequence. The [`Model`] is used both for encoding and decoding.
+/// in a sequence. The [`Model`] is used both for encoding and decoding. A
+/// 'fixed-length' model always expects an exact number of symbols, and so does
+/// not need to encode an EOF symbol.
+///
+/// A fixed length model can be converted into a regular model using the
+/// convenience [`Wrapper`] type.
 ///
 /// The more accurately a [`Model`] is able to predict the next symbol, the
 /// greater the compression ratio will be.
@@ -17,7 +22,7 @@ use crate::BitStore;
 /// #![feature(never_type)]
 /// use std::ops::Range;
 ///
-/// use arithmetic_coding::fixed_length::Model;
+/// use arithmetic_coding::fixed_length;
 ///
 /// pub enum Symbol {
 ///     A,
@@ -27,7 +32,7 @@ use crate::BitStore;
 ///
 /// pub struct MyModel;
 ///
-/// impl Model for MyModel {
+/// impl fixed_length::Model for MyModel {
 ///     type Symbol = Symbol;
 ///     type ValueError = !;
 ///
@@ -162,15 +167,19 @@ where
     ) -> Result<Range<Self::B>, Self::ValueError> {
         if self.remaining > 0 {
             if let Some(s) = symbol {
+                // Expected a symbol and got one. return the probability.
                 self.inner_model
                     .probability(s)
                     .map_err(Self::ValueError::Value)
             } else {
+                // We are expecting more symbols, but got an EOF
                 Err(Self::ValueError::UnexpectedEof)
             }
         } else if symbol.is_some() {
+            // we should be finished, but got an extra symbol
             Err(Error::UnexpectedSymbol)
         } else {
+            // got an EOF when we expected it, return a 100% probability
             Ok(Self::B::ZERO..self.denominator())
         }
     }
