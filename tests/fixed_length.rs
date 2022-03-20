@@ -57,6 +57,7 @@ fn round_trip() {
 #[test]
 #[should_panic]
 fn round_trip_fail() {
+    // this is too many symbols for this model
     let input = vec![
         Symbol::A,
         Symbol::B,
