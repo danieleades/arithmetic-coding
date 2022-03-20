@@ -1,7 +1,8 @@
 use std::{fs::File, io::Read, ops::Range};
 
-use arithmetic_coding::{Decoder, Encoder, Model};
-use bitstream_io::{BigEndian, BitReader, BitWrite, BitWriter};
+use arithmetic_coding::Model;
+
+mod common;
 
 const ALPHABET: &str =
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,\n-':()[]#*;\"!?*&é/àâè%@$";
@@ -55,15 +56,7 @@ fn main() {
 
     let model = StringModel::new(ALPHABET.chars().collect());
 
-    let output = Vec::default();
-    let mut bitwriter = BitWriter::endian(output, BigEndian);
-    let mut encoder = Encoder::new(model.clone());
-
-    println!("encoding...");
-    encoder.encode_all(input.chars(), &mut bitwriter).unwrap();
-    bitwriter.byte_align().unwrap();
-
-    let buffer = bitwriter.into_writer();
+    let buffer = common::encode(model.clone(), input.chars());
 
     let output_bytes = buffer.len();
 
@@ -77,16 +70,9 @@ fn main() {
 
     // println!("buffer: {:?}", &buffer);
 
-    let bitreader = BitReader::endian(buffer.as_slice(), BigEndian);
+    let output = common::decode(model, &buffer);
 
-    println!("\ndecoding...\n");
-    let mut decoder = Decoder::new(model, bitreader).unwrap();
-    let mut output = String::new();
-    while let Some(symbol) = decoder.decode_symbol().unwrap() {
-        output.push(symbol);
-    }
-
-    let mut prefix: String = output.chars().take(299).collect();
+    let mut prefix: String = output.into_iter().take(299).collect();
     prefix.push_str("...");
 
     println!("{}", prefix);

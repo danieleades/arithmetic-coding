@@ -2,9 +2,11 @@
 
 use std::ops::Range;
 
-use arithmetic_coding::{Decoder, Encoder, Model};
-use bitstream_io::{BigEndian, BitReader, BitWrite, BitWriter};
+use arithmetic_coding::Model;
 
+mod common;
+
+#[derive(Clone)]
 pub struct MyModel;
 
 #[derive(Debug, thiserror::Error)]
@@ -41,25 +43,5 @@ impl Model for MyModel {
 }
 
 fn main() {
-    let input = [2, 1, 1, 2, 2];
-
-    let output = Vec::default();
-    let mut bitwriter = BitWriter::endian(output, BigEndian);
-    let mut encoder = Encoder::new(MyModel);
-
-    println!("encoding...");
-    encoder.encode_all(input, &mut bitwriter).unwrap();
-    bitwriter.byte_align().unwrap();
-
-    let buffer = bitwriter.into_writer();
-
-    println!("buffer: {:?}", &buffer);
-
-    let bitreader = BitReader::endian(buffer.as_slice(), BigEndian);
-
-    println!("\ndecoding...");
-    let mut decoder = Decoder::new(MyModel, bitreader).unwrap();
-    while let Some(symbol) = decoder.decode_symbol().unwrap() {
-        dbg!(symbol);
-    }
+    common::round_trip(MyModel, vec![2, 1, 1, 2, 2]);
 }
