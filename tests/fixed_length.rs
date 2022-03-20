@@ -53,3 +53,11 @@ fn round_trip() {
 
     common::round_trip(input, fixed_length::Wrapper::new(MyModel));
 }
+
+#[test]
+#[should_panic]
+fn round_trip_fail() {
+    let input = vec![Symbol::A, Symbol::B, Symbol::C, Symbol::A, Symbol::B, Symbol::C];
+
+    common::round_trip(input, fixed_length::Wrapper::new(MyModel));
+}
