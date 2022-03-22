@@ -1,0 +1,92 @@
+//! [`Models`](crate::Model) implemented using Fenwick trees
+
+use std::ops::Range;
+
+pub mod context_switching;
+pub mod simple;
+
+/// A wrapper around a vector of fenwick counts, with one additional weight for
+/// EOF.
+#[derive(Debug, Clone)]
+struct Weights {
+    fenwick_counts: Vec<u64>,
+    total: u64,
+}
+
+impl Weights {
+    fn new(n: usize) -> Self {
+        // we add one extra value here to account for the EOF
+        let mut fenwick_counts = vec![0; n + 1];
+
+        for i in 0..fenwick_counts.len() {
+            fenwick::array::update(&mut fenwick_counts, i, 1);
+        }
+
+        let total = fenwick_counts.len() as u64;
+        Self {
+            fenwick_counts,
+            total,
+        }
+    }
+
+    fn update(&mut self, i: Option<usize>, delta: u64) {
+        let index = i.map(|i| i + 1).unwrap_or_default();
+        fenwick::array::update(&mut self.fenwick_counts, index, delta);
+        self.total += delta;
+    }
+
+    fn prefix_sum(&self, i: Option<usize>) -> u64 {
+        let index = i.map(|i| i + 1).unwrap_or_default();
+        fenwick::array::prefix_sum(&self.fenwick_counts, index)
+    }
+
+    fn range(&self, i: Option<usize>) -> Range<u64> {
+        let index = i.map(|i| i + 1).unwrap_or_default();
+
+        let upper = fenwick::array::prefix_sum(&self.fenwick_counts, index);
+
+        let lower = if index == 0 {
+            0
+        } else {
+            fenwick::array::prefix_sum(&self.fenwick_counts, index - 1)
+        };
+        lower..upper
+    }
+
+    fn len(&self) -> usize {
+        self.fenwick_counts.len() - 1
+    }
+
+    fn symbol(&self, prefix_sum: u64) -> Option<usize> {
+        if prefix_sum < self.prefix_sum(None) {
+            return None;
+        }
+
+        for i in 0..self.len() {
+            if prefix_sum < self.prefix_sum(Some(i)) {
+                return Some(i);
+            }
+        }
+
+        unreachable!()
+    }
+
+    fn total(&self) -> u64 {
+        self.total
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Weights;
+
+    #[test]
+    fn range() {
+        let weights = Weights::new(4);
+        assert_eq!(weights.range(None), 0..1);
+        assert_eq!(weights.range(Some(0)), 1..2);
+        assert_eq!(weights.range(Some(1)), 2..3);
+        assert_eq!(weights.range(Some(2)), 3..4);
+        assert_eq!(weights.range(Some(3)), 4..5);
+    }
+}
