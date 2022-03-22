@@ -9,7 +9,6 @@
 #![warn(clippy::pedantic)]
 #![feature(int_log)]
 #![feature(associated_type_defaults)]
-#![feature(exclusive_range_pattern)]
 
 mod model;
 pub use model::Model;

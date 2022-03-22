@@ -19,7 +19,7 @@ impl FenwickModel {
     pub fn with_symbols(symbols: usize) -> Self {
         let mut contexts = Vec::with_capacity(symbols + 1);
         let mut denominator = 0;
-        let max_denominator = 1 << 20;
+        let max_denominator = 1 << 17;
 
         for _ in 0..=symbols {
             let weight = Weights::new(symbols);

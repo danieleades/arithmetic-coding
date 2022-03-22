@@ -18,7 +18,7 @@ impl FenwickModel {
 
         Self {
             weights,
-            max_denominator: 1 << 20,
+            max_denominator: 1 << 17,
         }
     }
 }
