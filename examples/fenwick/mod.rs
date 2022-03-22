@@ -75,18 +75,3 @@ impl Weights {
         self.total
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::Weights;
-
-    #[test]
-    fn range() {
-        let weights = Weights::new(4);
-        assert_eq!(weights.range(None), 0..1);
-        assert_eq!(weights.range(Some(0)), 1..2);
-        assert_eq!(weights.range(Some(1)), 2..3);
-        assert_eq!(weights.range(Some(2)), 3..4);
-        assert_eq!(weights.range(Some(3)), 4..5);
-    }
-}

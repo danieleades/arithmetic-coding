@@ -24,7 +24,6 @@ pub fn encode<M, I>(model: M, input: I) -> Vec<u8>
 where
     M: Model,
     I: IntoIterator<Item = M::Symbol>,
-    M::Symbol: std::fmt::Debug,
 {
     let mut bitwriter = BitWriter::endian(Vec::new(), BigEndian);
     let mut encoder = Encoder::<M>::new(model);
@@ -38,7 +37,6 @@ where
 pub fn decode<M>(model: M, buffer: &[u8]) -> Vec<M::Symbol>
 where
     M: Model,
-    M::Symbol: std::fmt::Debug,
 {
     let bitreader = BitReader::endian(buffer, BigEndian);
     let mut decoder = Decoder::new(model, bitreader).unwrap();
