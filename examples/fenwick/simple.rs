@@ -25,7 +25,7 @@ impl FenwickModel {
 
 #[derive(Debug, thiserror::Error)]
 #[error("invalid symbol received: {0}")]
-pub struct ValueError(usize);
+pub struct ValueError(pub usize);
 
 impl Model for FenwickModel {
     type B = u64;

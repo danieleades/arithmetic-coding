@@ -27,7 +27,7 @@ where
     M::Symbol: std::fmt::Debug,
 {
     let mut bitwriter = BitWriter::endian(Vec::new(), BigEndian);
-    let mut encoder = Encoder::<M>::with_precision(model, 42);
+    let mut encoder = Encoder::<M>::new(model);
 
     encoder.encode_all(input, &mut bitwriter).unwrap();
     bitwriter.byte_align().unwrap();
@@ -41,7 +41,7 @@ where
     M::Symbol: std::fmt::Debug,
 {
     let bitreader = BitReader::endian(buffer, BigEndian);
-    let mut decoder = Decoder::with_precision(model, bitreader, 42).unwrap();
+    let mut decoder = Decoder::new(model, bitreader).unwrap();
     let mut output = Vec::new();
 
     while let Some(symbol) = decoder.decode_symbol().unwrap() {
