@@ -150,8 +150,12 @@ where
     /// This method can fail if the underlying [`BitRead`] cannot be read from.
     pub fn decode_symbol(&mut self) -> Result<Option<M::Symbol>, Error<M::ValueError>> {
         let range = self.high - self.low + M::B::ONE;
-        let value =
-            ((self.x - self.low + M::B::ONE) * self.model.denominator() - M::B::ONE) / range;
+        let denominator = self.model.denominator();
+        debug_assert!(
+            denominator <= self.model.max_denominator(),
+            "denominator is greater than maximum!"
+        );
+        let value = ((self.x - self.low + M::B::ONE) * denominator - M::B::ONE) / range;
         let symbol = self.model.symbol(value);
 
         let p = self
@@ -159,11 +163,12 @@ where
             .probability(symbol.as_ref())
             .map_err(Error::ValueError)?;
 
-        self.high = self.low + (range * p.end) / self.model.denominator() - M::B::ONE;
-        self.low += (range * p.start) / self.model.denominator();
+        self.high = self.low + (range * p.end) / denominator - M::B::ONE;
+        self.low += (range * p.start) / denominator;
 
         self.model.update(symbol.as_ref());
         self.normalise()?;
+
         Ok(symbol)
     }
 

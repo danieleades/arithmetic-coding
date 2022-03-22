@@ -13,4 +13,5 @@ bitstream-io = "1.2.0"
 thiserror = "1.0.30"
 
 [dev-dependencies]
+fenwick = { version = "1.0.0" }
 test-case = "2.0.0"
