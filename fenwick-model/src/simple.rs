@@ -10,6 +10,7 @@ use crate::ValueError;
 pub struct FenwickModel {
     weights: Weights,
     max_denominator: u64,
+    panic_on_saturation: bool,
 }
 
 impl FenwickModel {
@@ -20,6 +21,7 @@ impl FenwickModel {
         Self {
             weights,
             max_denominator,
+            panic_on_saturation: false,
         }
     }
 }
@@ -57,10 +59,12 @@ impl Model for FenwickModel {
     }
 
     fn update(&mut self, symbol: Option<&Self::Symbol>) {
-        debug_assert!(
-            self.denominator() < self.max_denominator,
-            "hit max denominator!"
-        );
+        if self.panic_on_saturation {
+            debug_assert!(
+                self.denominator() < self.max_denominator,
+                "hit max denominator!"
+            );
+        }
         if self.denominator() < self.max_denominator {
             self.weights.update(symbol.copied(), 1);
         }
