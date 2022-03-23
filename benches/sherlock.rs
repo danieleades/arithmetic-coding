@@ -1,10 +1,9 @@
 use std::{fs::File, io::Read, ops::Range};
 
 use arithmetic_coding::Model;
+use fenwick_model::{simple::FenwickModel, ValueError};
 
 mod common;
-
-use fenwick_model::{simple::FenwickModel, ValueError};
 
 #[derive(Debug, Clone)]
 pub struct StringModel {
