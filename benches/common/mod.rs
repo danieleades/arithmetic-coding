@@ -1,17 +1,19 @@
 use arithmetic_coding::{Decoder, Encoder, Model};
 use bitstream_io::{BigEndian, BitReader, BitWrite, BitWriter};
 
-#[allow(unused)]
 pub fn round_trip<M>(model: M, input: &[M::Symbol])
 where
     M: Model + Clone,
-    M::Symbol: Copy,
+    M::Symbol: Copy + std::fmt::Debug + PartialEq,
 {
     let buffer = encode(model.clone(), input.iter().copied());
 
+    let mut output = Vec::with_capacity(input.len());
     for symbol in decode(model, &buffer) {
-        continue;
+        output.push(symbol);
     }
+
+    assert_eq!(input, output.as_slice());
 }
 
 pub fn encode<M, I>(model: M, input: I) -> Vec<u8>
@@ -40,31 +42,4 @@ where
         output.push(symbol);
     }
     output
-}
-
-#[allow(unused)]
-pub fn round_trip_string<M>(model: M, input: String)
-where
-    M: Model<Symbol = char> + Clone,
-{
-    let input_bytes = input.bytes().len();
-
-    let buffer = encode(model.clone(), input.chars());
-
-    let output_bytes = buffer.len();
-
-    println!("input bytes: {}", input_bytes);
-    println!("output bytes: {}", output_bytes);
-
-    println!(
-        "compression ratio: {}",
-        input_bytes as f32 / output_bytes as f32
-    );
-
-    let output = decode(model, &buffer);
-
-    let mut prefix: String = output.into_iter().take(299).collect();
-    prefix.push_str("...");
-
-    println!("{}", prefix);
 }
