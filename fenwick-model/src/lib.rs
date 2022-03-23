@@ -79,3 +79,46 @@ impl Weights {
 #[derive(Debug, thiserror::Error)]
 #[error("invalid symbol received: {0}")]
 pub struct ValueError(pub usize);
+
+#[cfg(test)]
+mod tests {
+    use super::Weights;
+
+    #[test]
+    fn total() {
+        let weights = Weights::new(3);
+        assert_eq!(weights.total(), 4);
+    }
+
+    #[test]
+    fn range() {
+        let weights = Weights::new(3);
+        assert_eq!(weights.range(None), 0..1);
+        assert_eq!(weights.range(Some(0)), 1..2);
+        assert_eq!(weights.range(Some(1)), 2..3);
+        assert_eq!(weights.range(Some(2)), 3..4);
+    }
+
+    #[test]
+    #[should_panic]
+    fn range_out_of_bounds() {
+        let weights = Weights::new(3);
+        weights.range(Some(3));
+    }
+
+    #[test]
+    fn symbol() {
+        let weights = Weights::new(3);
+        assert_eq!(weights.symbol(0), None);
+        assert_eq!(weights.symbol(1), Some(0));
+        assert_eq!(weights.symbol(2), Some(1));
+        assert_eq!(weights.symbol(3), Some(2));
+    }
+
+    #[test]
+    #[should_panic]
+    fn symbol_out_of_bounds() {
+        let weights = Weights::new(3);
+        weights.symbol(4);
+    }
+}
