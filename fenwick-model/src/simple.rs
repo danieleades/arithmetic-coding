@@ -41,7 +41,6 @@ impl Builder {
 }
 
 impl FenwickModel {
-    #[must_use]
     pub fn builder(n_symbols: usize, max_denominator: u64) -> Builder {
         Builder::new(n_symbols, max_denominator)
     }
