@@ -59,14 +59,15 @@ use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
 pub fn criterion_benchmark(c: &mut Criterion) {
     let mut input_string = String::new();
-    File::open("./benches/sherlock.txt")
+    File::open("./resources/sherlock.txt")
         .unwrap()
         .read_to_string(&mut input_string)
         .unwrap();
 
-    let input = input_string.into_bytes();
+    let truncated: String = input_string.chars().take(3428).collect();
+    let input = truncated.as_bytes();
 
-    c.bench_function("round trip", |b| b.iter(|| round_trip(black_box(&input))));
+    c.bench_function("round trip", |b| b.iter(|| round_trip(black_box(input))));
 }
 
 criterion_group!(benches, criterion_benchmark);
