@@ -30,11 +30,7 @@ where
     M: Model,
 {
     let bitreader = BitReader::endian(buffer, BigEndian);
-    let mut decoder = Decoder::new(model, bitreader).expect("failed to initialise decoder");
-    let mut output = Vec::new();
+    let mut decoder = Decoder::new(model, bitreader).unwrap();
 
-    while let Some(symbol) = decoder.decode_symbol().expect("failed to encode symbol!") {
-        output.push(symbol);
-    }
-    output
+    decoder.decode_all().map(Result::unwrap).collect()
 }

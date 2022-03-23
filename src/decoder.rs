@@ -2,7 +2,7 @@ use std::io;
 
 use bitstream_io::BitRead;
 
-use crate::{BitStore, Error, Model};
+use crate::{BitStore, Model};
 
 // this algorithm is derived from this article - https://marknelson.us/posts/2014/10/19/data-compression-with-arithmetic-coding.html
 
@@ -22,6 +22,7 @@ where
     high: M::B,
     input: R,
     x: M::B,
+    uninitialised: bool,
 }
 
 trait BitReadExt {
@@ -49,10 +50,6 @@ where
     /// needed to represent the [`Model::denominator`]. 'precision' bits is
     /// equal to [`u32::BITS`] - [`Model::denominator`] bits.
     ///
-    /// # Errors
-    ///
-    /// This method can fail if the underlying [`BitRead`] cannot be read from.
-    ///
     /// # Panics
     ///
     /// The calculation of the number of bits used for 'precision' is subject to
@@ -64,7 +61,7 @@ where
     ///
     /// If these constraints cannot be satisfied this method will panic in debug
     /// builds
-    pub fn new(model: M, input: R) -> io::Result<Self> {
+    pub fn new(model: M, input: R) -> Self {
         let frequency_bits = model.max_denominator().log2() + 1;
         let precision = M::B::BITS - frequency_bits;
 
@@ -72,10 +69,6 @@ where
     }
 
     /// Construct a new [`Decoder`] with a custom precision
-    ///
-    /// # Errors
-    ///
-    /// This method can fail if the underlying [`BitRead`] cannot be read from.
     ///
     /// # Panics
     ///
@@ -88,7 +81,7 @@ where
     ///
     /// If these constraints cannot be satisfied this method will panic in debug
     /// builds
-    pub fn with_precision(model: M, input: R, precision: u32) -> io::Result<Self> {
+    pub fn with_precision(model: M, input: R, precision: u32) -> Self {
         let frequency_bits = model.max_denominator().log2() + 1;
         debug_assert!(
             (precision >= (frequency_bits + 2)),
@@ -103,17 +96,15 @@ where
         let high = M::B::ONE << precision;
         let x = M::B::ZERO;
 
-        let mut encoder = Self {
+        Self {
             model,
             precision,
             low,
             high,
             input,
             x,
-        };
-
-        encoder.fill()?;
-        Ok(encoder)
+            uninitialised: true,
+        }
     }
 
     fn fill(&mut self) -> io::Result<()> {
@@ -141,6 +132,13 @@ where
         self.half() + self.quarter()
     }
 
+    /// Return an iterator over the decoded symbols.
+    ///
+    /// The iterator will continue returning symbols until EOF is reached
+    pub fn decode_all(&mut self) -> DecodeIter<M, R> {
+        DecodeIter { decoder: self }
+    }
+
     /// Read the next symbol from the stream of bits
     ///
     /// This method will return `Ok(None)` when EOF is reached.
@@ -148,7 +146,12 @@ where
     /// # Errors
     ///
     /// This method can fail if the underlying [`BitRead`] cannot be read from.
-    pub fn decode_symbol(&mut self) -> Result<Option<M::Symbol>, Error<M::ValueError>> {
+    pub fn decode(&mut self) -> io::Result<Option<M::Symbol>> {
+        if self.uninitialised {
+            self.fill()?;
+            self.uninitialised = false;
+        }
+
         let range = self.high - self.low + M::B::ONE;
         let denominator = self.model.denominator();
         debug_assert!(
@@ -161,7 +164,7 @@ where
         let p = self
             .model
             .probability(symbol.as_ref())
-            .map_err(Error::ValueError)?;
+            .expect("this should not be able to fail. Check the implementation of the model.");
 
         self.high = self.low + (range * p.end) / denominator - M::B::ONE;
         self.low += (range * p.start) / denominator;
@@ -224,6 +227,29 @@ where
             high: self.high,
             input: self.input,
             x: self.x,
+            uninitialised: self.uninitialised,
         }
+    }
+}
+
+/// The iterator returned by the [`Model::decode_all`] method
+#[derive(Debug)]
+pub struct DecodeIter<'a, M, R>
+where
+    M: Model,
+    R: BitRead,
+{
+    decoder: &'a mut Decoder<M, R>,
+}
+
+impl<'a, M, R> Iterator for DecodeIter<'a, M, R>
+where
+    M: Model,
+    R: BitRead,
+{
+    type Item = io::Result<M::Symbol>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.decoder.decode().transpose()
     }
 }

@@ -11,20 +11,23 @@ use crate::{BitStore, Error, Model};
 /// An arithmetic decoder converts a stream of symbols into a stream of bits,
 /// using a predictive [`Model`].
 #[derive(Debug)]
-pub struct Encoder<M>
+pub struct Encoder<'a, M, W>
 where
     M: Model,
+    W: BitWrite,
 {
     model: M,
     precision: u32,
     low: M::B,
     high: M::B,
     pending: usize,
+    output: &'a mut W,
 }
 
-impl<M> Encoder<M>
+impl<'a, M, W> Encoder<'a, M, W>
 where
     M: Model,
+    W: BitWrite,
 {
     /// Construct a new [`Encoder`].
     ///
@@ -44,10 +47,10 @@ where
     ///
     /// If these constraints cannot be satisfied this method will panic in debug
     /// builds
-    pub fn new(model: M) -> Self {
+    pub fn new(model: M, bitwriter: &'a mut W) -> Self {
         let frequency_bits = model.max_denominator().log2() + 1;
         let precision = M::B::BITS - frequency_bits;
-        Self::with_precision(model, precision)
+        Self::with_precision(model, bitwriter, precision)
     }
 
     /// Construct a new [`Encoder`] with a custom precision.
@@ -63,7 +66,7 @@ where
     ///
     /// If these constraints cannot be satisfied this method will panic in debug
     /// builds
-    pub fn with_precision(model: M, precision: u32) -> Self {
+    pub fn with_precision(model: M, bitwriter: &'a mut W, precision: u32) -> Self {
         let frequency_bits = model.max_denominator().log2() + 1;
         debug_assert!(
             (precision >= (frequency_bits + 2)),
@@ -84,6 +87,7 @@ where
             low,
             high,
             pending,
+            output: bitwriter,
         }
     }
 
@@ -96,16 +100,15 @@ where
     ///
     /// This method can fail if the underlying [`BitWrite`] cannot be written
     /// to.
-    pub fn encode_all<W: BitWrite>(
+    pub fn encode_all(
         &mut self,
         symbols: impl IntoIterator<Item = M::Symbol>,
-        output: &mut W,
     ) -> Result<(), Error<M::ValueError>> {
         for symbol in symbols {
-            self.encode(Some(&symbol), output)?;
+            self.encode(Some(&symbol))?;
         }
-        self.encode(None, output)?;
-        self.flush(output)?;
+        self.encode(None)?;
+        self.flush()?;
         Ok(())
     }
 
@@ -132,11 +135,7 @@ where
     ///
     /// This method can fail if the underlying [`BitWrite`] cannot be written
     /// to.
-    pub fn encode<W: BitWrite>(
-        &mut self,
-        symbol: Option<&M::Symbol>,
-        output: &mut W,
-    ) -> Result<(), Error<M::ValueError>> {
+    pub fn encode(&mut self, symbol: Option<&M::Symbol>) -> Result<(), Error<M::ValueError>> {
         let range = self.high - self.low + M::B::ONE;
         let p = self.model.probability(symbol).map_err(Error::ValueError)?;
         let denominator = self.model.denominator();
@@ -149,20 +148,20 @@ where
         self.low += (range * p.start) / denominator;
 
         self.model.update(symbol);
-        self.normalise(output)?;
+        self.normalise()?;
 
         Ok(())
     }
 
-    fn normalise<W: BitWrite>(&mut self, output: &mut W) -> io::Result<()> {
+    fn normalise(&mut self) -> io::Result<()> {
         while self.high < self.half() || self.low >= self.half() {
             if self.high < self.half() {
-                self.emit(false, output)?;
+                self.emit(false)?;
                 self.high <<= 1;
                 self.low <<= 1;
             } else {
                 // self.low >= self.half()
-                self.emit(true, output)?;
+                self.emit(true)?;
                 self.low = (self.low - self.half()) << 1;
                 self.high = (self.high - self.half()) << 1;
             }
@@ -177,10 +176,10 @@ where
         Ok(())
     }
 
-    fn emit<W: BitWrite>(&mut self, bit: bool, output: &mut W) -> io::Result<()> {
-        output.write_bit(bit)?;
+    fn emit(&mut self, bit: bool) -> io::Result<()> {
+        self.output.write_bit(bit)?;
         for _ in 0..self.pending {
-            output.write_bit(!bit)?;
+            self.output.write_bit(!bit)?;
         }
         self.pending = 0;
         Ok(())
@@ -196,12 +195,12 @@ where
     ///
     /// This method can fail if the underlying [`BitWrite`] cannot be written
     /// to.
-    pub fn flush<W: BitWrite>(&mut self, output: &mut W) -> io::Result<()> {
+    pub fn flush(&mut self) -> io::Result<()> {
         self.pending += 1;
         if self.low <= self.quarter() {
-            self.emit(false, output)?;
+            self.emit(false)?;
         } else {
-            self.emit(true, output)?;
+            self.emit(true)?;
         }
 
         Ok(())
@@ -211,7 +210,7 @@ where
     ///
     /// Allows for chaining multiple sequences of symbols into a single stream
     /// of bits
-    pub fn chain<X>(self, model: X) -> Encoder<X>
+    pub fn chain<X>(self, model: X) -> Encoder<'a, X, W>
     where
         X: Model<B = M::B>,
     {
@@ -221,6 +220,7 @@ where
             low: self.low,
             high: self.high,
             pending: self.pending,
+            output: self.output,
         }
     }
 }

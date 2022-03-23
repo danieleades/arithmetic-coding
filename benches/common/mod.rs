@@ -22,9 +22,9 @@ where
     I: IntoIterator<Item = M::Symbol>,
 {
     let mut bitwriter = BitWriter::endian(Vec::new(), BigEndian);
-    let mut encoder = Encoder::<M>::new(model);
+    let mut encoder = Encoder::new(model, &mut bitwriter);
 
-    encoder.encode_all(input, &mut bitwriter).unwrap();
+    encoder.encode_all(input).unwrap();
     bitwriter.byte_align().unwrap();
 
     bitwriter.into_writer()
@@ -35,11 +35,6 @@ where
     M: Model,
 {
     let bitreader = BitReader::endian(buffer, BigEndian);
-    let mut decoder = Decoder::new(model, bitreader).unwrap();
-    let mut output = Vec::new();
-
-    while let Some(symbol) = decoder.decode_symbol().unwrap() {
-        output.push(symbol);
-    }
-    output
+    let mut decoder = Decoder::new(model, bitreader);
+    decoder.decode_all().map(Result::unwrap).collect()
 }

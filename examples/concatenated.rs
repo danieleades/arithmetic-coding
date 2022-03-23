@@ -121,13 +121,13 @@ where
 {
     let mut bitwriter = BitWriter::endian(Vec::default(), BigEndian);
 
-    let mut encoder1 = Encoder::with_precision(model1, PRECISION);
-    encode(&mut encoder1, input1, &mut bitwriter);
+    let mut encoder1 = Encoder::with_precision(model1, &mut bitwriter, PRECISION);
+    encode(&mut encoder1, input1);
 
     let mut encoder2 = encoder1.chain(model2);
-    encode(&mut encoder2, input2, &mut bitwriter);
+    encode(&mut encoder2, input2);
 
-    encoder2.flush(&mut bitwriter).unwrap();
+    encoder2.flush().unwrap();
 
     bitwriter.byte_align().unwrap();
     bitwriter.into_writer()
@@ -135,15 +135,15 @@ where
 
 /// Encode all symbols, followed by EOF. Doesn't flush the encoder (allowing
 /// more bits to be concatenated)
-fn encode<M, W>(encoder: &mut Encoder<M>, input: &[M::Symbol], bitwriter: &mut W)
+fn encode<M, W>(encoder: &mut Encoder<M, W>, input: &[M::Symbol])
 where
     M: Model,
     W: BitWrite,
 {
     for symbol in input {
-        encoder.encode(Some(symbol), bitwriter).unwrap();
+        encoder.encode(Some(symbol)).unwrap();
     }
-    encoder.encode(None, bitwriter).unwrap();
+    encoder.encode(None).unwrap();
 }
 
 /// Decode two sets of symbols, in sequence
@@ -154,12 +154,10 @@ where
 {
     let bitreader = BitReader::endian(buffer, BigEndian);
 
-    let mut decoder1 = Decoder::with_precision(model1, bitreader, PRECISION).unwrap();
-
+    let mut decoder1 = Decoder::with_precision(model1, bitreader, PRECISION);
     let output1 = decode(&mut decoder1);
 
     let mut decoder2 = decoder1.chain(model2);
-
     let output2 = decode(&mut decoder2);
 
     (output1, output2)
@@ -171,11 +169,5 @@ where
     M: Model,
     R: BitRead,
 {
-    let mut output = Vec::default();
-
-    while let Some(symbol) = decoder.decode_symbol().unwrap() {
-        output.push(symbol);
-    }
-
-    output
+    decoder.decode_all().map(Result::unwrap).collect()
 }
