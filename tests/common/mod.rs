@@ -1,15 +1,15 @@
 use arithmetic_coding::{Decoder, Encoder, Model};
 use bitstream_io::{BigEndian, BitReader, BitWrite, BitWriter};
 
-pub fn round_trip<M>(model: M, input: Vec<M::Symbol>)
+pub fn round_trip<M>(model: M, input: &[M::Symbol])
 where
     M: Model + Clone,
     M::Symbol: PartialEq + std::fmt::Debug + Clone,
 {
-    let buffer = encode(model.clone(), input.clone());
+    let buffer = encode(model.clone(), input.to_owned());
     let output = decode(model, &buffer);
 
-    assert_eq!(input, output);
+    assert_eq!(input, output.as_slice());
 }
 
 fn encode<M>(model: M, input: Vec<M::Symbol>) -> Vec<u8>
