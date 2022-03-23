@@ -13,16 +13,35 @@ pub struct FenwickModel {
     panic_on_saturation: bool,
 }
 
-impl FenwickModel {
-    #[must_use]
-    pub fn with_symbols(symbols: usize, max_denominator: u64) -> Self {
-        let weights = Weights::new(symbols);
+pub struct Builder {
+    model: FenwickModel,
+}
 
-        Self {
+impl Builder {
+    fn new(n_symbols: usize, max_denominator: u64) -> Self {
+        let weights = Weights::new(n_symbols);
+        let model = FenwickModel {
             weights,
             max_denominator,
             panic_on_saturation: false,
-        }
+        };
+        Self { model }
+    }
+
+    pub fn panic_on_saturation(mut self) -> Self {
+        self.model.panic_on_saturation = true;
+        self
+    }
+
+    pub fn build(self) -> FenwickModel {
+        self.model
+    }
+}
+
+impl FenwickModel {
+    #[must_use]
+    pub fn builder(n_symbols: usize, max_denominator: u64) -> Builder {
+        Builder::new(n_symbols, max_denominator)
     }
 }
 

@@ -13,7 +13,9 @@ pub struct StringModel {
 impl StringModel {
     #[must_use]
     pub fn new(symbols: usize) -> Self {
-        let fenwick_model = FenwickModel::with_symbols(symbols, 1 << 20);
+        let fenwick_model = FenwickModel::builder(symbols, 1 << 20)
+            .panic_on_saturation()
+            .build();
         Self { fenwick_model }
     }
 }
