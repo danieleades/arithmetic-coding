@@ -142,7 +142,7 @@ where
 {
     let bitreader = BitReader::endian(buffer, BigEndian);
 
-    let mut decoder1 = Decoder::with_precision(model1, bitreader, PRECISION).unwrap();
+    let mut decoder1 = Decoder::with_precision(model1, bitreader, PRECISION);
 
     let output1 = decode(&mut decoder1);
 

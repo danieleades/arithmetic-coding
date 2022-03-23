@@ -22,6 +22,7 @@ where
     high: M::B,
     input: R,
     x: M::B,
+    uninitialised: bool,
 }
 
 trait BitReadExt {
@@ -49,10 +50,6 @@ where
     /// needed to represent the [`Model::denominator`]. 'precision' bits is
     /// equal to [`u32::BITS`] - [`Model::denominator`] bits.
     ///
-    /// # Errors
-    ///
-    /// This method can fail if the underlying [`BitRead`] cannot be read from.
-    ///
     /// # Panics
     ///
     /// The calculation of the number of bits used for 'precision' is subject to
@@ -64,7 +61,7 @@ where
     ///
     /// If these constraints cannot be satisfied this method will panic in debug
     /// builds
-    pub fn new(model: M, input: R) -> io::Result<Self> {
+    pub fn new(model: M, input: R) -> Self {
         let frequency_bits = model.max_denominator().log2() + 1;
         let precision = M::B::BITS - frequency_bits;
 
@@ -72,10 +69,6 @@ where
     }
 
     /// Construct a new [`Decoder`] with a custom precision
-    ///
-    /// # Errors
-    ///
-    /// This method can fail if the underlying [`BitRead`] cannot be read from.
     ///
     /// # Panics
     ///
@@ -88,7 +81,7 @@ where
     ///
     /// If these constraints cannot be satisfied this method will panic in debug
     /// builds
-    pub fn with_precision(model: M, input: R, precision: u32) -> io::Result<Self> {
+    pub fn with_precision(model: M, input: R, precision: u32) -> Self {
         let frequency_bits = model.max_denominator().log2() + 1;
         debug_assert!(
             (precision >= (frequency_bits + 2)),
@@ -103,17 +96,15 @@ where
         let high = M::B::ONE << precision;
         let x = M::B::ZERO;
 
-        let mut encoder = Self {
+        Self {
             model,
             precision,
             low,
             high,
             input,
             x,
-        };
-
-        encoder.fill()?;
-        Ok(encoder)
+            uninitialised: true,
+        }
     }
 
     fn fill(&mut self) -> io::Result<()> {
@@ -156,6 +147,11 @@ where
     ///
     /// This method can fail if the underlying [`BitRead`] cannot be read from.
     pub fn decode(&mut self) -> io::Result<Option<M::Symbol>> {
+        if self.uninitialised {
+            self.fill()?;
+            self.uninitialised = false;
+        }
+
         let range = self.high - self.low + M::B::ONE;
         let denominator = self.model.denominator();
         debug_assert!(
@@ -231,6 +227,7 @@ where
             high: self.high,
             input: self.input,
             x: self.x,
+            uninitialised: self.uninitialised,
         }
     }
 }
