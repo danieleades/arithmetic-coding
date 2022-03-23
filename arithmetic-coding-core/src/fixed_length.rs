@@ -20,9 +20,9 @@ use crate::BitStore;
 /// ```
 /// #![feature(exclusive_range_pattern)]
 /// #![feature(never_type)]
-/// use std::ops::Range;
-///
-/// use arithmetic_coding::fixed_length;
+/// # use std::ops::Range;
+/// #
+/// # use arithmetic_coding_core::fixed_length;
 ///
 /// pub enum Symbol {
 ///     A,
