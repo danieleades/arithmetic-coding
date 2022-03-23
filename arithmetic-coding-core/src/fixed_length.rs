@@ -146,10 +146,7 @@ where
     /// Construct a new wrapper from a [`fixed_length::Model`](Model)
     pub fn new(model: M) -> Self {
         let remaining = model.length();
-        Self {
-            model,
-            remaining,
-        }
+        Self { model, remaining }
     }
 }
 
@@ -168,9 +165,7 @@ where
         if self.remaining > 0 {
             if let Some(s) = symbol {
                 // Expected a symbol and got one. return the probability.
-                self.model
-                    .probability(s)
-                    .map_err(Self::ValueError::Value)
+                self.model.probability(s).map_err(Self::ValueError::Value)
             } else {
                 // We are expecting more symbols, but got an EOF
                 Err(Self::ValueError::UnexpectedEof)
