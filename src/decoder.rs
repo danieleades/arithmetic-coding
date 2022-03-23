@@ -233,7 +233,7 @@ where
 }
 
 /// The iterator returned by the [`Model::decode_all`] method
-#[derive(Debug)]
+#[allow(missing_debug_implementations)]
 pub struct DecodeIter<'a, M, R>
 where
     M: Model,
