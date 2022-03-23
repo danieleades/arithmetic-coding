@@ -18,7 +18,9 @@ pub struct StringModel {
 impl StringModel {
     #[must_use]
     pub fn new(alphabet: Vec<char>) -> Self {
-        let fenwick_model = FenwickModel::with_symbols(alphabet.len(), 1 << 20);
+        let fenwick_model = FenwickModel::builder(alphabet.len(), 1 << 20)
+            .panic_on_saturation()
+            .build();
         Self {
             alphabet,
             fenwick_model,

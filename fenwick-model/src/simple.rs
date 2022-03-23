@@ -10,17 +10,38 @@ use crate::ValueError;
 pub struct FenwickModel {
     weights: Weights,
     max_denominator: u64,
+    panic_on_saturation: bool,
+}
+
+pub struct Builder {
+    model: FenwickModel,
+}
+
+impl Builder {
+    fn new(n_symbols: usize, max_denominator: u64) -> Self {
+        let weights = Weights::new(n_symbols);
+        let model = FenwickModel {
+            weights,
+            max_denominator,
+            panic_on_saturation: false,
+        };
+        Self { model }
+    }
+
+    pub fn panic_on_saturation(mut self) -> Self {
+        self.model.panic_on_saturation = true;
+        self
+    }
+
+    pub fn build(self) -> FenwickModel {
+        self.model
+    }
 }
 
 impl FenwickModel {
     #[must_use]
-    pub fn with_symbols(symbols: usize, max_denominator: u64) -> Self {
-        let weights = Weights::new(symbols);
-
-        Self {
-            weights,
-            max_denominator,
-        }
+    pub fn builder(n_symbols: usize, max_denominator: u64) -> Builder {
+        Builder::new(n_symbols, max_denominator)
     }
 }
 
@@ -57,10 +78,12 @@ impl Model for FenwickModel {
     }
 
     fn update(&mut self, symbol: Option<&Self::Symbol>) {
-        debug_assert!(
-            self.denominator() < self.max_denominator,
-            "hit max denominator!"
-        );
+        if self.panic_on_saturation {
+            debug_assert!(
+                self.denominator() < self.max_denominator,
+                "hit max denominator!"
+            );
+        }
         if self.denominator() < self.max_denominator {
             self.weights.update(symbol.copied(), 1);
         }
