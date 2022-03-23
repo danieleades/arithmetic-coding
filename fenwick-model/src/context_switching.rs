@@ -1,37 +1,29 @@
-#![allow(missing_docs, unused)]
 //! Fenwick tree based context-switching model
 
 use arithmetic_coding_core::Model;
 
 use super::Weights;
+use crate::ValueError;
 
 #[derive(Debug, Clone)]
 pub struct FenwickModel {
     contexts: Vec<Weights>,
-    previous_context: usize,
     current_context: usize,
-    denominator: u64,
     max_denominator: u64,
 }
 
 impl FenwickModel {
     #[must_use]
-    pub fn with_symbols(symbols: usize) -> Self {
+    pub fn with_symbols(symbols: usize, max_denominator: u64) -> Self {
         let mut contexts = Vec::with_capacity(symbols + 1);
-        let mut denominator = 0;
-        let max_denominator = 1 << 17;
 
         for _ in 0..=symbols {
-            let weight = Weights::new(symbols);
-            denominator = denominator.max(weight.total());
             contexts.push(Weights::new(symbols));
         }
 
         Self {
             contexts,
-            previous_context: 1,
             current_context: 1,
-            denominator,
             max_denominator,
         }
     }
@@ -45,42 +37,34 @@ impl FenwickModel {
     }
 }
 
-#[derive(Debug, thiserror::Error)]
-#[error("invalid symbol received: {0}")]
-pub struct ValueError(usize);
-
 impl Model for FenwickModel {
     type B = u64;
     type Symbol = usize;
     type ValueError = ValueError;
 
-    fn probability(
-        &self,
-        symbol: Option<&Self::Symbol>,
-    ) -> Result<std::ops::Range<Self::B>, Self::ValueError> {
+    fn probability(&self, symbol: Option<&usize>) -> Result<std::ops::Range<u64>, ValueError> {
         Ok(self.context().range(symbol.copied()))
     }
 
-    fn max_denominator(&self) -> Self::B {
-        self.max_denominator
-    }
-
-    fn symbol(&self, value: Self::B) -> Option<Self::Symbol> {
-        self.context().symbol(value)
-    }
-
-    fn denominator(&self) -> Self::B {
+    fn denominator(&self) -> u64 {
         self.context().total
     }
 
-    fn update(&mut self, symbol: Option<&Self::Symbol>) {
+    fn max_denominator(&self) -> u64 {
+        self.max_denominator
+    }
+
+    fn symbol(&self, value: u64) -> Option<usize> {
+        self.context().symbol(value)
+    }
+
+    fn update(&mut self, symbol: Option<&usize>) {
         debug_assert!(
             self.denominator() < self.max_denominator,
             "hit max denominator!"
         );
         if self.denominator() < self.max_denominator {
             self.context_mut().update(symbol.copied(), 1);
-            self.denominator = self.denominator.max(self.context().total());
         }
         self.current_context = symbol.map(|x| x + 1).unwrap_or_default();
     }

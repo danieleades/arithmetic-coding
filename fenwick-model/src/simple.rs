@@ -4,6 +4,7 @@
 use arithmetic_coding_core::Model;
 
 use super::Weights;
+use crate::ValueError;
 
 #[derive(Debug, Clone)]
 pub struct FenwickModel {
@@ -13,19 +14,15 @@ pub struct FenwickModel {
 
 impl FenwickModel {
     #[must_use]
-    pub fn with_symbols(symbols: usize) -> Self {
+    pub fn with_symbols(symbols: usize, max_denominator: u64) -> Self {
         let weights = Weights::new(symbols);
 
         Self {
             weights,
-            max_denominator: 1 << 17,
+            max_denominator,
         }
     }
 }
-
-#[derive(Debug, thiserror::Error)]
-#[error("invalid symbol received: {0}")]
-pub struct ValueError(pub usize);
 
 impl Model for FenwickModel {
     type B = u64;

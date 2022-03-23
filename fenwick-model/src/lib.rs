@@ -75,3 +75,7 @@ impl Weights {
         self.total
     }
 }
+
+#[derive(Debug, thiserror::Error)]
+#[error("invalid symbol received: {0}")]
+pub struct ValueError(pub usize);

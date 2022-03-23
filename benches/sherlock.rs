@@ -1,12 +1,10 @@
 use std::{fs::File, io::Read, ops::Range};
 
-use arithmetic_coding::{
-    Model,
-};
+use arithmetic_coding::Model;
 
 mod common;
 
-use fenwick_model::simple::{FenwickModel, ValueError};
+use fenwick_model::{simple::FenwickModel, ValueError};
 
 #[derive(Debug, Clone)]
 pub struct StringModel {
@@ -16,7 +14,7 @@ pub struct StringModel {
 impl StringModel {
     #[must_use]
     pub fn new(symbols: usize) -> Self {
-        let fenwick_model = FenwickModel::with_symbols(symbols);
+        let fenwick_model = FenwickModel::with_symbols(symbols, 1 << 20);
         Self { fenwick_model }
     }
 }
