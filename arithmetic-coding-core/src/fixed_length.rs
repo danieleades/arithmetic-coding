@@ -135,7 +135,7 @@ pub struct Wrapper<M>
 where
     M: Model,
 {
-    inner_model: M,
+    model: M,
     remaining: usize,
 }
 
@@ -147,7 +147,7 @@ where
     pub fn new(model: M) -> Self {
         let remaining = model.length();
         Self {
-            inner_model: model,
+            model,
             remaining,
         }
     }
@@ -168,7 +168,7 @@ where
         if self.remaining > 0 {
             if let Some(s) = symbol {
                 // Expected a symbol and got one. return the probability.
-                self.inner_model
+                self.model
                     .probability(s)
                     .map_err(Self::ValueError::Value)
             } else {
@@ -185,24 +185,24 @@ where
     }
 
     fn max_denominator(&self) -> Self::B {
-        self.inner_model.max_denominator()
+        self.model.max_denominator()
     }
 
     fn symbol(&self, value: Self::B) -> Option<Self::Symbol> {
         if self.remaining > 0 {
-            Some(self.inner_model.symbol(value))
+            Some(self.model.symbol(value))
         } else {
             None
         }
     }
 
     fn denominator(&self) -> Self::B {
-        self.inner_model.denominator()
+        self.model.denominator()
     }
 
     fn update(&mut self, symbol: Option<&Self::Symbol>) {
         if let Some(s) = symbol {
-            self.inner_model.update(s);
+            self.model.update(s);
             self.remaining -= 1;
         }
     }
