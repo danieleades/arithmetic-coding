@@ -1,17 +1,25 @@
 [package]
 name = "arithmetic-coding"
-description = "fast and felxible arithmetic coding library"
-version = "0.1.0"
+description = "fast and flexible arithmetic coding library"
+version = "0.1.1"
 edition = "2021"
 license = "MIT"
 keywords = ["compression", "encoding", "arithmetic-coding", "lossless"]
 categories = ["compression", "encoding", "parsing"]
 repository = "https://github.com/danieleades/arithmetic-coding"
 
+[workspace]
+members = [
+    ".",
+    "arithmetic-coding-core",
+    "fenwick-model",
+]
+
 [dependencies]
+arithmetic-coding-core = { path = "./arithmetic-coding-core", version = "0.1.0" }
 bitstream-io = "1.2.0"
 thiserror = "1.0.30"
 
 [dev-dependencies]
-fenwick = { version = "1.0.0" }
 test-case = "2.0.0"
+fenwick-model = { path = "./fenwick-model" }

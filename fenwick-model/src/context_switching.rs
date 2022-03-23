@@ -1,7 +1,7 @@
 #![allow(missing_docs, unused)]
 //! Fenwick tree based context-switching model
 
-use arithmetic_coding::Model;
+use arithmetic_coding_core::Model;
 
 use super::Weights;
 

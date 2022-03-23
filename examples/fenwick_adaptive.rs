@@ -3,9 +3,8 @@ use std::{fs::File, io::Read, ops::Range};
 use arithmetic_coding::Model;
 
 mod common;
-mod fenwick;
 
-use self::fenwick::simple::{FenwickModel, ValueError};
+use fenwick_model::simple::{FenwickModel, ValueError};
 
 const ALPHABET: &str =
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,\n-':()[]#*;\"!?*&é/àâè%@$";
