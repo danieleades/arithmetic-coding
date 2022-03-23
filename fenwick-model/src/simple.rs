@@ -1,7 +1,7 @@
 #![allow(missing_docs, unused)]
 //! simple adaptive model using a fenwick tree
 
-use arithmetic_coding::Model;
+use arithmetic_coding_core::Model;
 
 use super::Weights;
 

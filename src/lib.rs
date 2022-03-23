@@ -7,22 +7,14 @@
     clippy::cargo
 )]
 #![warn(clippy::pedantic)]
-#![feature(int_log)]
-#![feature(associated_type_defaults)]
 
-mod model;
-pub use model::Model;
-
-mod encoder;
-pub use encoder::Encoder;
+pub use arithmetic_coding_core::{fixed_length, BitStore, Model};
 
 mod decoder;
+mod encoder;
+
 pub use decoder::Decoder;
-
-mod bitstore;
-pub use bitstore::BitStore;
-
-pub mod fixed_length;
+pub use encoder::Encoder;
 
 /// Errors that can occur during encoding/decoding
 #[derive(Debug, thiserror::Error)]
