@@ -31,10 +31,6 @@ where
 {
     let bitreader = BitReader::endian(buffer, BigEndian);
     let mut decoder = Decoder::new(model, bitreader).unwrap();
-    let mut output = Vec::new();
 
-    while let Some(symbol) = decoder.decode_symbol().unwrap() {
-        output.push(symbol);
-    }
-    output
+    decoder.decode_all().map(Result::unwrap).collect()
 }

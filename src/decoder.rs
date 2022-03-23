@@ -2,7 +2,7 @@ use std::io;
 
 use bitstream_io::BitRead;
 
-use crate::{BitStore, Error, Model};
+use crate::{BitStore, Model};
 
 // this algorithm is derived from this article - https://marknelson.us/posts/2014/10/19/data-compression-with-arithmetic-coding.html
 
@@ -141,6 +141,13 @@ where
         self.half() + self.quarter()
     }
 
+    /// Return an iterator over the decoded symbols.
+    ///
+    /// The iterator will continue returning symbols until EOF is reached
+    pub fn decode_all(&mut self) -> DecodeIter<M, R> {
+        DecodeIter { decoder: self }
+    }
+
     /// Read the next symbol from the stream of bits
     ///
     /// This method will return `Ok(None)` when EOF is reached.
@@ -148,7 +155,7 @@ where
     /// # Errors
     ///
     /// This method can fail if the underlying [`BitRead`] cannot be read from.
-    pub fn decode_symbol(&mut self) -> Result<Option<M::Symbol>, Error<M::ValueError>> {
+    pub fn decode(&mut self) -> io::Result<Option<M::Symbol>> {
         let range = self.high - self.low + M::B::ONE;
         let denominator = self.model.denominator();
         debug_assert!(
@@ -161,7 +168,7 @@ where
         let p = self
             .model
             .probability(symbol.as_ref())
-            .map_err(Error::ValueError)?;
+            .expect("this should not be able to fail. Check the implementation of the model.");
 
         self.high = self.low + (range * p.end) / denominator - M::B::ONE;
         self.low += (range * p.start) / denominator;
@@ -225,5 +232,27 @@ where
             input: self.input,
             x: self.x,
         }
+    }
+}
+
+/// The iterator returned by the [`Model::decode_all`] method
+#[derive(Debug)]
+pub struct DecodeIter<'a, M, R>
+where
+    M: Model,
+    R: BitRead,
+{
+    decoder: &'a mut Decoder<M, R>,
+}
+
+impl<'a, M, R> Iterator for DecodeIter<'a, M, R>
+where
+    M: Model,
+    R: BitRead,
+{
+    type Item = io::Result<M::Symbol>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.decoder.decode().transpose()
     }
 }

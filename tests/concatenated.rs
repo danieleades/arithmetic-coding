@@ -159,11 +159,5 @@ where
     M: Model,
     R: BitRead,
 {
-    let mut output = Vec::default();
-
-    while let Some(symbol) = decoder.decode_symbol().unwrap() {
-        output.push(symbol);
-    }
-
-    output
+    decoder.decode_all().map(Result::unwrap).collect()
 }

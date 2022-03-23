@@ -14,6 +14,7 @@ pub trait BitStore:
     + AddAssign
     + PartialOrd
     + Copy
+    + std::fmt::Debug
 {
     /// the number of bits needed to represent this type
     const BITS: u32;
