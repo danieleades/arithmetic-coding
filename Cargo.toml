@@ -21,5 +21,9 @@ bitstream-io = "1.2.0"
 thiserror = "1.0.30"
 
 [dev-dependencies]
-test-case = "2.0.0"
 fenwick-model = { path = "./fenwick-model" }
+criterion = "0.3.5"
+
+[[bench]]
+name = "sherlock"
+harness = false

@@ -4,7 +4,7 @@ use arithmetic_coding::Model;
 
 mod common;
 
-use fenwick_model::simple::{FenwickModel, ValueError};
+use fenwick_model::{simple::FenwickModel, ValueError};
 
 const ALPHABET: &str =
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,\n-':()[]#*;\"!?*&é/àâè%@$";
@@ -18,7 +18,7 @@ pub struct StringModel {
 impl StringModel {
     #[must_use]
     pub fn new(alphabet: Vec<char>) -> Self {
-        let fenwick_model = FenwickModel::with_symbols(alphabet.len());
+        let fenwick_model = FenwickModel::with_symbols(alphabet.len(), 1 << 20);
         Self {
             alphabet,
             fenwick_model,
