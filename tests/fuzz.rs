@@ -8,5 +8,5 @@ fn round_trip() {
     let bytes: &[u8] = &[220, 255, 255];
     let input: Vec<usize> = bytes.iter().copied().map(usize::from).collect();
 
-    common::round_trip(model, input);
+    common::round_trip(model, &input);
 }

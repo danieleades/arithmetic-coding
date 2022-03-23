@@ -49,7 +49,7 @@ impl fixed_length::Model for MyModel {
 
 #[test]
 fn round_trip() {
-    let input = vec![Symbol::A, Symbol::B, Symbol::C];
+    let input = &[Symbol::A, Symbol::B, Symbol::C];
 
     common::round_trip(fixed_length::Wrapper::new(MyModel), input);
 }
@@ -58,7 +58,7 @@ fn round_trip() {
 #[should_panic]
 fn round_trip_fail() {
     // this is too many symbols for this model
-    let input = vec![
+    let input = &[
         Symbol::A,
         Symbol::B,
         Symbol::C,

@@ -44,7 +44,7 @@ fn round_trip() {
     let mut file = File::open("./resources/sherlock.txt").unwrap();
     let mut string = String::new();
     file.read_to_string(&mut string).unwrap();
-    let input = string.chars().collect();
+    let input: Vec<_> = string.chars().collect();
 
-    common::round_trip(StringModel, input);
+    common::round_trip(StringModel, &input);
 }

@@ -60,7 +60,7 @@ impl Model for StringModel {
 
     fn update(&mut self, symbol: Option<&Self::Symbol>) {
         let fenwick_symbol = symbol.map(|c| self.alphabet.iter().position(|x| x == c).unwrap());
-        self.fenwick_model.update(fenwick_symbol.as_ref())
+        self.fenwick_model.update(fenwick_symbol.as_ref());
     }
 }
 
@@ -73,5 +73,5 @@ fn main() {
         .read_to_string(&mut input)
         .unwrap();
 
-    common::round_trip_string(model, input);
+    common::round_trip_string(model, &input);
 }

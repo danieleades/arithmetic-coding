@@ -58,6 +58,7 @@ fn round_trip(input: &[u8]) {
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
+#[allow(clippy::missing_panics_doc)]
 pub fn criterion_benchmark(c: &mut Criterion) {
     let mut input_string = String::new();
     File::open("./resources/sherlock.txt")

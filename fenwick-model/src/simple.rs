@@ -13,6 +13,7 @@ pub struct FenwickModel {
     panic_on_saturation: bool,
 }
 
+#[must_use]
 pub struct Builder {
     model: FenwickModel,
 }
@@ -33,13 +34,13 @@ impl Builder {
         self
     }
 
+    #[must_use]
     pub fn build(self) -> FenwickModel {
         self.model
     }
 }
 
 impl FenwickModel {
-    #[must_use]
     pub fn builder(n_symbols: usize, max_denominator: u64) -> Builder {
         Builder::new(n_symbols, max_denominator)
     }
