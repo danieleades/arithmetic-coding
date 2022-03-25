@@ -22,7 +22,7 @@ impl Model for MyModel {
             None => Ok(0..1),
             Some(&1) => Ok(1..2),
             Some(&2) => Ok(2..3),
-            Some(&3) => Ok(2..4),
+            Some(&3) => Ok(3..4),
             Some(x) => Err(Error(*x)),
         }
     }
@@ -43,5 +43,5 @@ impl Model for MyModel {
 }
 
 fn main() {
-    common::round_trip(MyModel, vec![2, 1, 1, 2, 2]);
+    common::round_trip(MyModel, vec![2, 1, 1, 2, 2, 3, 1]);
 }
