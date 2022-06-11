@@ -66,8 +66,8 @@ impl Weights {
         // we seek the lowest number i such that prefix_sum(i) > prefix_sum
         let mut low = 0;
         let mut high = self.len();
-	debug_assert!(low < high);
-	debug_assert!(prefix_sum < self.prefix_sum(Some(high - 1)));
+        debug_assert!(low < high);
+        debug_assert!(prefix_sum < self.prefix_sum(Some(high - 1)));
         while low + 1 < high {
             let i = (low + high - 1) / 2;
             if self.prefix_sum(Some(i)) > prefix_sum {
