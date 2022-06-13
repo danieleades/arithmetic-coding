@@ -22,6 +22,6 @@ Encodes the entire text of "The Adventures of Sherlock Holmes". By allowing a su
 
 Encodes "The Adventures of Sherlock Holmes" using an adaptive model based on [fenwick trees](https://en.wikipedia.org/wiki/Fenwick_tree).
 
-## [Fenwick Tree (Context-Switcing)](./fenwick_adaptive.rs)
+## [Fenwick Tree (Context-Switcing)](./fenwick_context_switching.rs)
 
 Encodes "The Adventures of Sherlock Holmes" using a *context switching* adaptive model based on [fenwick trees](https://en.wikipedia.org/wiki/Fenwick_tree). Achieves very high compression.

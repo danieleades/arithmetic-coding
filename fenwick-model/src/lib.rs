@@ -62,13 +62,23 @@ impl Weights {
             return None;
         }
 
-        for i in 0..self.len() {
-            if prefix_sum < self.prefix_sum(Some(i)) {
-                return Some(i);
+        // invariant: low <= our answer < high
+        // we seek the lowest number i such that prefix_sum(i) > prefix_sum
+        let mut low = 0;
+        let mut high = self.len();
+        debug_assert!(low < high);
+        debug_assert!(prefix_sum < self.prefix_sum(Some(high - 1)));
+        while low + 1 < high {
+            let i = (low + high - 1) / 2;
+            if self.prefix_sum(Some(i)) > prefix_sum {
+                // i could be our answer, so set high just above it.
+                high = i + 1;
+            } else {
+                // i could not be our answer, so set low just above it.
+                low = i + 1;
             }
         }
-
-        unreachable!()
+        Some(low)
     }
 
     fn total(&self) -> u64 {
