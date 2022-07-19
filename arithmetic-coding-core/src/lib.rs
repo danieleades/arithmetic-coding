@@ -14,6 +14,4 @@ mod bitstore;
 pub use bitstore::BitStore;
 
 mod model;
-pub use model::Model;
-
-pub mod fixed_length;
+pub use model::{fixed_length, max_length, one_shot, Model};

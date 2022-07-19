@@ -1,13 +1,17 @@
-use std::{error::Error, ops::Range};
+//! Helper trait for creating Models which only accept a single symbol
 
-use crate::BitStore;
+use std::ops::Range;
 
-pub mod fixed_length;
-pub mod max_length;
-pub mod one_shot;
+pub use crate::fixed_length::Wrapper;
+use crate::{fixed_length, BitStore};
 
 /// A [`Model`] is used to calculate the probability of a given symbol occuring
-/// in a sequence. The [`Model`] is used both for encoding and decoding.
+/// in a sequence. The [`Model`] is used both for encoding and decoding. A
+/// 'fixed-length' model always expects an exact number of symbols, and so does
+/// not need to encode an EOF symbol.
+///
+/// A fixed length model can be converted into a regular model using the
+/// convenience [`Wrapper`] type.
 ///
 /// The more accurately a [`Model`] is able to predict the next symbol, the
 /// greater the compression ratio will be.
@@ -19,7 +23,7 @@ pub mod one_shot;
 /// #![feature(never_type)]
 /// # use std::ops::Range;
 /// #
-/// # use arithmetic_coding_core::Model;
+/// # use arithmetic_coding_core::one_shot;
 ///
 /// pub enum Symbol {
 ///     A,
@@ -29,31 +33,29 @@ pub mod one_shot;
 ///
 /// pub struct MyModel;
 ///
-/// impl Model for MyModel {
+/// impl one_shot::Model for MyModel {
 ///     type Symbol = Symbol;
 ///     type ValueError = !;
 ///
-///     fn probability(&self, symbol: Option<&Self::Symbol>) -> Result<Range<u32>, !> {
+///     fn probability(&self, symbol: &Self::Symbol) -> Result<Range<u32>, !> {
 ///         Ok(match symbol {
-///             None => 0..1,
-///             Some(&Symbol::A) => 1..2,
-///             Some(&Symbol::B) => 2..3,
-///             Some(&Symbol::C) => 3..4,
+///             Symbol::A => 0..1,
+///             Symbol::B => 1..2,
+///             Symbol::C => 2..3,
 ///         })
 ///     }
 ///
-///     fn symbol(&self, value: Self::B) -> Option<Self::Symbol> {
+///     fn symbol(&self, value: Self::B) -> Self::Symbol {
 ///         match value {
-///             0..1 => None,
-///             1..2 => Some(Symbol::A),
-///             2..3 => Some(Symbol::B),
-///             3..4 => Some(Symbol::C),
+///             0..1 => Symbol::A,
+///             1..2 => Symbol::B,
+///             2..3 => Symbol::C,
 ///             _ => unreachable!(),
 ///         }
 ///     }
 ///
 ///     fn max_denominator(&self) -> u32 {
-///         4
+///         3
 ///     }
 /// }
 /// ```
@@ -62,7 +64,7 @@ pub trait Model {
     type Symbol;
 
     /// Invalid symbol error
-    type ValueError: Error;
+    type ValueError: std::error::Error;
 
     /// The internal representation to use for storing integers
     type B: BitStore = u32;
@@ -83,23 +85,7 @@ pub trait Model {
     /// # Errors
     ///
     /// This returns a custom error if the given symbol is not valid
-    fn probability(
-        &self,
-        symbol: Option<&Self::Symbol>,
-    ) -> Result<Range<Self::B>, Self::ValueError>;
-
-    /// The denominator for probability ranges. See [`Model::probability`].
-    ///
-    /// By default this method simply returns the [`Model::max_denominator`],
-    /// which is suitable for non-adaptive models.
-    ///
-    /// In adaptive models this value may change, however it should never exceed
-    /// [`Model::max_denominator`], or it becomes possible for the
-    /// [`Encoder`](crate::Encoder) and [`Decoder`](crate::Decoder) to panic due
-    /// to overflow or underflow.
-    fn denominator(&self) -> Self::B {
-        self.max_denominator()
-    }
+    fn probability(&self, symbol: &Self::Symbol) -> Result<Range<Self::B>, Self::ValueError>;
 
     /// The maximum denominator used for probability ranges. See
     /// [`Model::probability`].
@@ -114,11 +100,34 @@ pub trait Model {
     /// `None` indicates `EOF`
     ///
     /// This is the inverse of the [`Model::probability`] method
-    fn symbol(&self, value: Self::B) -> Option<Self::Symbol>;
+    fn symbol(&self, value: Self::B) -> Self::Symbol;
+}
 
-    /// Update the current state of the model with the latest symbol.
-    ///
-    /// This method only needs to be implemented for 'adaptive' models. It's a
-    /// no-op by default.
-    fn update(&mut self, _symbol: Option<&Self::Symbol>) {}
+impl<T> fixed_length::Model for T
+where
+    T: Model,
+{
+    type B = T::B;
+    type Symbol = T::Symbol;
+    type ValueError = T::ValueError;
+
+    fn probability(&self, symbol: &Self::Symbol) -> Result<Range<Self::B>, Self::ValueError> {
+        Model::probability(self, symbol)
+    }
+
+    fn max_denominator(&self) -> Self::B {
+        self.max_denominator()
+    }
+
+    fn symbol(&self, value: Self::B) -> Self::Symbol {
+        Model::symbol(self, value)
+    }
+
+    fn length(&self) -> usize {
+        1
+    }
+
+    fn denominator(&self) -> Self::B {
+        self.max_denominator()
+    }
 }
