@@ -8,7 +8,7 @@ use test_case::test_case;
 
 mod common;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Eq)]
 pub enum Symbol {
     A,
     B,

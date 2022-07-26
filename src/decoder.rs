@@ -95,7 +95,7 @@ where
     }
 
     /// todo
-    pub fn with_state(state: State<M::B, R>, model: M) -> Self {
+    pub const fn with_state(state: State<M::B, R>, model: M) -> Self {
         Self { model, state }
     }
 

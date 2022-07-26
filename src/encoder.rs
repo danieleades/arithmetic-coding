@@ -82,7 +82,7 @@ where
     }
 
     /// todo
-    pub fn with_state(state: State<'a, M::B, W>, model: M) -> Self {
+    pub const fn with_state(state: State<'a, M::B, W>, model: M) -> Self {
         Self { model, state }
     }
 

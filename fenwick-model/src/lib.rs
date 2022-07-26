@@ -81,7 +81,7 @@ impl Weights {
         Some(low)
     }
 
-    fn total(&self) -> u64 {
+    const fn total(&self) -> u64 {
         self.total
     }
 }
