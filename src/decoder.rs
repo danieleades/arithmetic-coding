@@ -1,4 +1,6 @@
-use std::io;
+//! The [`Decoder`] half of the arithmetic coding library.
+
+use std::{io, ops::Range};
 
 use bitstream_io::BitRead;
 
@@ -17,12 +19,7 @@ where
     R: BitRead,
 {
     model: M,
-    precision: u32,
-    low: M::B,
-    high: M::B,
-    input: R,
-    x: M::B,
-    uninitialised: bool,
+    state: State<M::B, R>,
 }
 
 trait BitReadExt {
@@ -92,44 +89,14 @@ where
             "not enough bits in BitStore to support the required precision",
         );
 
-        let low = M::B::ZERO;
-        let high = M::B::ONE << precision;
-        let x = M::B::ZERO;
+        let state = State::new(precision, input);
 
-        Self {
-            model,
-            precision,
-            low,
-            high,
-            input,
-            x,
-            uninitialised: true,
-        }
+        Self { model, state }
     }
 
-    fn fill(&mut self) -> io::Result<()> {
-        for _ in 0..self.precision {
-            self.x <<= 1;
-            match self.input.next_bit()? {
-                Some(true) => {
-                    self.x += M::B::ONE;
-                }
-                Some(false) | None => (),
-            }
-        }
-        Ok(())
-    }
-
-    fn half(&self) -> M::B {
-        M::B::ONE << (self.precision - 1)
-    }
-
-    fn quarter(&self) -> M::B {
-        M::B::ONE << (self.precision - 2)
-    }
-
-    fn three_quarter(&self) -> M::B {
-        self.half() + self.quarter()
+    /// todo
+    pub const fn with_state(state: State<M::B, R>, model: M) -> Self {
+        Self { model, state }
     }
 
     /// Return an iterator over the decoded symbols.
@@ -147,18 +114,14 @@ where
     ///
     /// This method can fail if the underlying [`BitRead`] cannot be read from.
     pub fn decode(&mut self) -> io::Result<Option<M::Symbol>> {
-        if self.uninitialised {
-            self.fill()?;
-            self.uninitialised = false;
-        }
+        self.state.initialise()?;
 
-        let range = self.high - self.low + M::B::ONE;
         let denominator = self.model.denominator();
         debug_assert!(
             denominator <= self.model.max_denominator(),
             "denominator is greater than maximum!"
         );
-        let value = ((self.x - self.low + M::B::ONE) * denominator - M::B::ONE) / range;
+        let value = self.state.value(denominator);
         let symbol = self.model.symbol(value);
 
         let p = self
@@ -166,50 +129,10 @@ where
             .probability(symbol.as_ref())
             .expect("this should not be able to fail. Check the implementation of the model.");
 
-        self.high = self.low + (range * p.end) / denominator - M::B::ONE;
-        self.low += (range * p.start) / denominator;
-
+        self.state.scale(p, denominator)?;
         self.model.update(symbol.as_ref());
-        self.normalise()?;
 
         Ok(symbol)
-    }
-
-    fn normalise(&mut self) -> io::Result<()> {
-        while self.high < self.half() || self.low >= self.half() {
-            if self.high < self.half() {
-                self.high <<= 1;
-                self.low <<= 1;
-                self.x <<= 1;
-            } else {
-                // self.low >= self.half()
-                self.low = (self.low - self.half()) << 1;
-                self.high = (self.high - self.half()) << 1;
-                self.x = (self.x - self.half()) << 1;
-            }
-
-            match self.input.next_bit()? {
-                Some(true) => {
-                    self.x += M::B::ONE;
-                }
-                Some(false) | None => (),
-            }
-        }
-
-        while self.low >= self.quarter() && self.high < (self.three_quarter()) {
-            self.low = (self.low - self.quarter()) << 1;
-            self.high = (self.high - self.quarter()) << 1;
-            self.x = (self.x - self.quarter()) << 1;
-
-            match self.input.next_bit()? {
-                Some(true) => {
-                    self.x += M::B::ONE;
-                }
-                Some(false) | None => (),
-            }
-        }
-
-        Ok(())
     }
 
     /// Reuse the internal state of the Decoder with a new model.
@@ -222,13 +145,13 @@ where
     {
         Decoder {
             model,
-            precision: self.precision,
-            low: self.low,
-            high: self.high,
-            input: self.input,
-            x: self.x,
-            uninitialised: self.uninitialised,
+            state: self.state,
         }
+    }
+
+    /// todo
+    pub fn into_inner(self) -> (M, State<M::B, R>) {
+        (self.model, self.state)
     }
 }
 
@@ -251,5 +174,126 @@ where
 
     fn next(&mut self) -> Option<Self::Item> {
         self.decoder.decode().transpose()
+    }
+}
+
+/// A convenience struct which stores the internal state of an [`Decoder`].
+#[derive(Debug)]
+pub struct State<B, R>
+where
+    B: BitStore,
+    R: BitRead,
+{
+    precision: u32,
+    low: B,
+    high: B,
+    input: R,
+    x: B,
+    uninitialised: bool,
+}
+
+impl<B, R> State<B, R>
+where
+    B: BitStore,
+    R: BitRead,
+{
+    /// todo
+    pub fn new(precision: u32, input: R) -> Self {
+        let low = B::ZERO;
+        let high = B::ONE << precision;
+        let x = B::ZERO;
+
+        Self {
+            precision,
+            low,
+            high,
+            input,
+            x,
+            uninitialised: true,
+        }
+    }
+
+    fn half(&self) -> B {
+        B::ONE << (self.precision - 1)
+    }
+
+    fn quarter(&self) -> B {
+        B::ONE << (self.precision - 2)
+    }
+
+    fn three_quarter(&self) -> B {
+        self.half() + self.quarter()
+    }
+
+    fn normalise(&mut self) -> io::Result<()> {
+        while self.high < self.half() || self.low >= self.half() {
+            if self.high < self.half() {
+                self.high <<= 1;
+                self.low <<= 1;
+                self.x <<= 1;
+            } else {
+                // self.low >= self.half()
+                self.low = (self.low - self.half()) << 1;
+                self.high = (self.high - self.half()) << 1;
+                self.x = (self.x - self.half()) << 1;
+            }
+
+            match self.input.next_bit()? {
+                Some(true) => {
+                    self.x += B::ONE;
+                }
+                Some(false) | None => (),
+            }
+        }
+
+        while self.low >= self.quarter() && self.high < (self.three_quarter()) {
+            self.low = (self.low - self.quarter()) << 1;
+            self.high = (self.high - self.quarter()) << 1;
+            self.x = (self.x - self.quarter()) << 1;
+
+            match self.input.next_bit()? {
+                Some(true) => {
+                    self.x += B::ONE;
+                }
+                Some(false) | None => (),
+            }
+        }
+
+        Ok(())
+    }
+
+    fn scale(&mut self, p: Range<B>, denominator: B) -> io::Result<()> {
+        let range = self.high - self.low + B::ONE;
+
+        self.high = self.low + (range * p.end) / denominator - B::ONE;
+        self.low += (range * p.start) / denominator;
+
+        self.normalise()
+    }
+
+    fn value(&self, denominator: B) -> B {
+        let range = self.high - self.low + B::ONE;
+        ((self.x - self.low + B::ONE) * denominator - B::ONE) / range
+    }
+
+    fn fill(&mut self) -> io::Result<()> {
+        for _ in 0..self.precision {
+            self.x <<= 1;
+            match self.input.next_bit()? {
+                Some(true) => {
+                    self.x += B::ONE;
+                }
+                Some(false) | None => (),
+            }
+        }
+        Ok(())
+    }
+
+    fn initialise(&mut self) -> io::Result<()> {
+        if self.uninitialised {
+            self.fill()?;
+            self.uninitialised = false;
+        }
+        Ok(())
     }
 }

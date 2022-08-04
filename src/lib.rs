@@ -8,10 +8,10 @@
 )]
 #![warn(clippy::pedantic)]
 
-pub use arithmetic_coding_core::{fixed_length, BitStore, Model};
+pub use arithmetic_coding_core::{fixed_length, max_length, one_shot, BitStore, Model};
 
-mod decoder;
-mod encoder;
+pub mod decoder;
+pub mod encoder;
 
 pub use decoder::Decoder;
 pub use encoder::Encoder;

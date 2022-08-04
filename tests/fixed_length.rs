@@ -7,7 +7,7 @@ use arithmetic_coding::fixed_length;
 
 mod common;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Eq)]
 pub enum Symbol {
     A,
     B,

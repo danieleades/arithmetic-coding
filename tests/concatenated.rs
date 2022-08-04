@@ -50,7 +50,7 @@ mod integer {
 mod symbolic {
     use std::ops::Range;
 
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub enum Symbol {
         A,
         B,
