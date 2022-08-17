@@ -35,7 +35,7 @@ impl BitStore for u32 {
     const ZERO: Self = 0;
 
     fn log2(self) -> u32 {
-        u32::log2(self)
+        u32::ilog2(self)
     }
 }
 
@@ -45,7 +45,7 @@ impl BitStore for u64 {
     const ZERO: Self = 0;
 
     fn log2(self) -> u32 {
-        u64::log2(self)
+        u64::ilog2(self)
     }
 }
 
@@ -55,6 +55,6 @@ impl BitStore for u128 {
     const ZERO: Self = 0;
 
     fn log2(self) -> u32 {
-        u128::log2(self)
+        u128::ilog2(self)
     }
 }
