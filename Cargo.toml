@@ -1,7 +1,7 @@
 [package]
 name = "arithmetic-coding"
 description = "fast and flexible arithmetic coding library"
-version = "0.3.0"
+version = "0.3.1"
 edition = "2021"
 license = "MIT"
 keywords = ["compression", "encoding", "arithmetic-coding", "lossless"]
