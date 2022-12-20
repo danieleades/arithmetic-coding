@@ -16,7 +16,7 @@ where
 
     println!("\ndecoding...");
     for symbol in decode(model, &buffer) {
-        println!("{:?}", symbol);
+        println!("{symbol:?}");
     }
 }
 
@@ -54,8 +54,8 @@ where
 
     let output_bytes = buffer.len();
 
-    println!("input bytes: {}", input_bytes);
-    println!("output bytes: {}", output_bytes);
+    println!("input bytes: {input_bytes}");
+    println!("output bytes: {output_bytes}");
 
     println!(
         "compression ratio: {}",
@@ -67,5 +67,5 @@ where
     let mut prefix: String = output.into_iter().take(299).collect();
     prefix.push_str("...");
 
-    println!("{}", prefix);
+    println!("{prefix}");
 }

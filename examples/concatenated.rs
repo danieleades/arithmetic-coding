@@ -91,10 +91,10 @@ fn main() {
     use symbolic::Symbol;
 
     let input1 = [Symbol::A, Symbol::B, Symbol::C];
-    println!("input1: {:?}", input1);
+    println!("input1: {input1:?}");
 
     let input2 = [2, 1, 1, 2, 2];
-    println!("input2: {:?}", input2);
+    println!("input2: {input2:?}");
 
     println!("\nencoding...");
 
@@ -106,10 +106,10 @@ fn main() {
     let (output1, output2) = decode2(symbolic::Model, integer::Model, &buffer);
 
     for symbol in output1 {
-        println!("{:?}", symbol);
+        println!("{symbol:?}");
     }
     for symbol in output2 {
-        println!("{:?}", symbol);
+        println!("{symbol:?}");
     }
 }
 
