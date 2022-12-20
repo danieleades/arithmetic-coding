@@ -29,32 +29,20 @@ pub trait BitStore:
     fn log2(self) -> u32;
 }
 
-impl BitStore for u32 {
-    const BITS: u32 = u32::BITS;
-    const ONE: Self = 1;
-    const ZERO: Self = 0;
+macro_rules! impl_bitstore {
+    ($t:ty) => {
+        impl BitStore for $t {
+            const BITS: u32 = Self::BITS;
+            const ONE: Self = 1;
+            const ZERO: Self = 0;
 
-    fn log2(self) -> u32 {
-        u32::ilog2(self)
-    }
+            fn log2(self) -> u32 {
+                Self::ilog2(self)
+            }
+        }
+    };
 }
 
-impl BitStore for u64 {
-    const BITS: u32 = u64::BITS as u32;
-    const ONE: Self = 1;
-    const ZERO: Self = 0;
-
-    fn log2(self) -> u32 {
-        u64::ilog2(self)
-    }
-}
-
-impl BitStore for u128 {
-    const BITS: u32 = u128::BITS as u32;
-    const ONE: Self = 1;
-    const ZERO: Self = 0;
-
-    fn log2(self) -> u32 {
-        u128::ilog2(self)
-    }
-}
+impl_bitstore! {u32}
+impl_bitstore! {u64}
+impl_bitstore! {u128}

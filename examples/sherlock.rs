@@ -60,8 +60,8 @@ fn main() {
 
     let output_bytes = buffer.len();
 
-    println!("input bytes: {}", input_bytes);
-    println!("output bytes: {}", output_bytes);
+    println!("input bytes: {input_bytes}");
+    println!("output bytes: {output_bytes}");
 
     println!(
         "compression ratio: {}",
@@ -75,5 +75,5 @@ fn main() {
     let mut prefix: String = output.into_iter().take(299).collect();
     prefix.push_str("...");
 
-    println!("{}", prefix);
+    println!("{prefix}");
 }

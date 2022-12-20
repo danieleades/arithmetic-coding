@@ -7,7 +7,6 @@
     clippy::cargo
 )]
 #![warn(clippy::pedantic)]
-#![feature(int_log)]
 #![feature(associated_type_defaults)]
 
 mod bitstore;
