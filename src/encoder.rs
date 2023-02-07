@@ -19,7 +19,8 @@ where
     M: Model,
     W: BitWrite,
 {
-    model: M,
+    /// The model used for the encoder
+    pub model: M,
     state: State< M::B, W>,
 }
 

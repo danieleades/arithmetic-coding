@@ -19,7 +19,8 @@ where
     M: Model,
     R: BitRead,
 {
-    model: M,
+    /// The model used to predict the next symbol
+    pub model: M,
     state: State<M::B, R>,
 }
 
