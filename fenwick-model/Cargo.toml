@@ -12,5 +12,10 @@ repository = "https://github.com/danieleades/arithmetic-coding"
 
 [dependencies]
 arithmetic-coding-core = { path = "../arithmetic-coding-core" }
-fenwick = "2.0.0"
+#fenwick = "2.0.0"
+fenwick = { path = "../../fenwick.rs" }
 thiserror = "1.0.30"
+
+[profile.release]
+lto = true
+opt-level = 3
