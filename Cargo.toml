@@ -23,7 +23,7 @@ thiserror = "1.0.30"
 [dev-dependencies]
 fenwick-model = { path = "./fenwick-model" }
 criterion = "0.4.0"
-test-case = "2.0.2"
+test-case = "3.0.0"
 
 [[bench]]
 name = "sherlock"
