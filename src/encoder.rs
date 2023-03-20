@@ -6,6 +6,7 @@ use std::marker::PhantomData;
 use bitstream_io::BitWrite;
 
 use crate::{BitStore, Error, Model};
+use crate::Error::ValueError;
 
 // this algorithm is derived from this article - https://marknelson.us/posts/2014/10/19/data-compression-with-arithmetic-coding.html
 
@@ -101,7 +102,7 @@ where
         &mut self,
         symbols: impl IntoIterator<Item = M::Symbol>,
         output: &mut W,
-    ) -> Result<(), Error<M::ValueError>> {
+    ) -> Result<(), Error> {
         for symbol in symbols {
             self.encode(Some(&symbol), output)?;
         }
@@ -121,8 +122,11 @@ where
     ///
     /// This method can fail if the underlying [`BitWrite`] cannot be written
     /// to.
-    pub fn encode(&mut self, symbol: Option<&M::Symbol>, output: &mut W) -> Result<(), Error<M::ValueError>> {
-        let p = self.model.probability(symbol).map_err(Error::ValueError)?;
+    pub fn encode(&mut self, symbol: Option<&M::Symbol>, output: &mut W) -> Result<(), Error> {
+        let p = match self.model.probability(symbol) {
+            Ok(p) => {p}
+            Err(_) => {return Err(ValueError)}
+        } ;
         let denominator = self.model.denominator();
         debug_assert!(
             denominator <= self.model.max_denominator(),
