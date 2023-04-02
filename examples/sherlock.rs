@@ -24,27 +24,28 @@ impl StringModel {
 pub struct Error(char);
 
 impl Model for StringModel {
+    type B = usize;
     type Symbol = char;
     type ValueError = Error;
 
-    fn probability(&self, symbol: Option<&Self::Symbol>) -> Result<Range<u32>, Error> {
+    fn probability(&self, symbol: Option<&Self::Symbol>) -> Result<Range<usize>, Error> {
         if let Some(char) = symbol {
             match self.alphabet.iter().position(|x| x == char) {
-                Some(index) => Ok((index as u32)..(index as u32 + 1)),
+                Some(index) => Ok(index..(index + 1)),
                 None => Err(Error(*char)),
             }
         } else {
-            let alphabet_length = self.alphabet.len() as u32;
+            let alphabet_length = self.alphabet.len();
             Ok(alphabet_length..(alphabet_length + 1))
         }
     }
 
-    fn symbol(&self, value: u32) -> Option<Self::Symbol> {
-        self.alphabet.get(value as usize).copied()
+    fn symbol(&self, value: usize) -> Option<Self::Symbol> {
+        self.alphabet.get(value).copied()
     }
 
-    fn max_denominator(&self) -> u32 {
-        self.alphabet.len() as u32 + 1
+    fn max_denominator(&self) -> usize {
+        self.alphabet.len() + 1
     }
 }
 
