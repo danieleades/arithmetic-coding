@@ -81,7 +81,10 @@ where
         }
     }
 
-    /// todo
+    /// Create an encoder from an existing [`State`].
+    ///
+    /// This is useful for manually chaining a shared buffer through multiple
+    /// encoders.
     pub const fn with_state(state: State<'a, M::B, W>, model: M) -> Self {
         Self { model, state }
     }
@@ -185,7 +188,10 @@ where
     B: BitStore,
     W: BitWrite,
 {
-    /// todo
+    /// Manually construct a [`State`].
+    ///
+    /// Normally this would be done automatically using the [`Encoder::new`]
+    /// method.
     pub fn new(precision: u32, output: &'a mut W) -> Self {
         let low = B::ZERO;
         let high = B::ONE << precision;
@@ -228,7 +234,6 @@ where
                 self.high <<= 1;
                 self.low <<= 1;
             } else {
-                // self.low >= self.half()
                 self.emit(true)?;
                 self.low = (self.low - self.half()) << 1;
                 self.high = (self.high - self.half()) << 1;
@@ -253,7 +258,11 @@ where
         Ok(())
     }
 
-    /// todo
+    /// Flush the internal buffer and write all remaining bits to the output
+    ///
+    /// # Errors
+    ///
+    /// This method can fail if the output cannot be written to
     pub fn flush(&mut self) -> io::Result<()> {
         self.pending += 1;
         if self.low <= self.quarter() {

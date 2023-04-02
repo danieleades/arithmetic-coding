@@ -5,8 +5,6 @@ use std::ops::{Add, AddAssign, Div, Mul, Shl, ShlAssign, Sub};
 pub trait BitStore:
     Shl<u32, Output = Self>
     + ShlAssign<u32>
-    + Sized
-    + From<u32>
     + Sub<Output = Self>
     + Add<Output = Self>
     + Mul<Output = Self>
@@ -46,3 +44,4 @@ macro_rules! impl_bitstore {
 impl_bitstore! {u32}
 impl_bitstore! {u64}
 impl_bitstore! {u128}
+impl_bitstore! {usize}

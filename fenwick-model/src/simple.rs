@@ -29,7 +29,7 @@ impl Builder {
         Self { model }
     }
 
-    pub fn panic_on_saturation(mut self) -> Self {
+    pub const fn panic_on_saturation(mut self) -> Self {
         self.model.panic_on_saturation = true;
         self
     }
