@@ -253,7 +253,11 @@ where
         Ok(())
     }
 
-    /// todo
+    /// Flush the internal buffer and write all remaining bits to the output
+    ///
+    /// # Errors
+    ///
+    /// This method can fail if the output cannot be written to
     pub fn flush(&mut self) -> io::Result<()> {
         self.pending += 1;
         if self.low <= self.quarter() {
