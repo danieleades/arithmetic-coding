@@ -34,9 +34,7 @@ impl Model for StringModel {
         ALPHABET.chars().nth(value)
     }
 
-    fn max_denominator(&self) -> Self::B {
-        ALPHABET.len() + 1
-    }
+    const MAX_DENOMINATOR: Self::B = ALPHABET.len() + 1;
 }
 
 #[test]

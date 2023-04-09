@@ -38,13 +38,11 @@ impl fixed_length::Model for MyModel {
         }
     }
 
-    fn max_denominator(&self) -> u32 {
-        3
-    }
-
     fn length(&self) -> usize {
         3
     }
+
+    const MAX_DENOMINATOR: Self::B = 3;
 }
 
 fn main() {

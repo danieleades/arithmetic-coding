@@ -5,15 +5,17 @@ use fenwick_model::{simple::FenwickModel, ValueError};
 
 mod common;
 
+const MAX_DENOMINATOR: u64 = 1 << 20;
+
 #[derive(Debug, Clone)]
 pub struct StringModel {
-    fenwick_model: FenwickModel,
+    fenwick_model: FenwickModel<MAX_DENOMINATOR>,
 }
 
 impl StringModel {
     #[must_use]
     pub fn new(symbols: usize) -> Self {
-        let fenwick_model = FenwickModel::builder(symbols, 1 << 20)
+        let fenwick_model = FenwickModel::builder(symbols)
             .panic_on_saturation()
             .build();
         Self { fenwick_model }
@@ -41,13 +43,11 @@ impl Model for StringModel {
         self.fenwick_model.symbol(value).map(|x| x as u8)
     }
 
-    fn max_denominator(&self) -> Self::B {
-        self.fenwick_model.max_denominator()
-    }
-
     fn denominator(&self) -> Self::B {
         self.fenwick_model.denominator()
     }
+
+    const MAX_DENOMINATOR: Self::B = MAX_DENOMINATOR;
 }
 
 fn round_trip(input: &[u8]) {
