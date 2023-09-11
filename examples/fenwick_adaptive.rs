@@ -9,16 +9,18 @@ use fenwick_model::{simple::FenwickModel, ValueError};
 const ALPHABET: &str =
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,\n-':()[]#*;\"!?*&é/àâè%@$";
 
+const MAX_DENOMINATOR: u64 = 1 << 20;
+
 #[derive(Debug, Clone)]
 pub struct StringModel {
     alphabet: Vec<char>,
-    fenwick_model: FenwickModel,
+    fenwick_model: FenwickModel<MAX_DENOMINATOR>,
 }
 
 impl StringModel {
     #[must_use]
     pub fn new(alphabet: Vec<char>) -> Self {
-        let fenwick_model = FenwickModel::builder(alphabet.len(), 1 << 20)
+        let fenwick_model = FenwickModel::builder(alphabet.len())
             .panic_on_saturation()
             .build();
         Self {
@@ -50,10 +52,6 @@ impl Model for StringModel {
         self.alphabet.get(index).copied()
     }
 
-    fn max_denominator(&self) -> Self::B {
-        self.fenwick_model.max_denominator()
-    }
-
     fn denominator(&self) -> Self::B {
         self.fenwick_model.denominator()
     }
@@ -62,6 +60,8 @@ impl Model for StringModel {
         let fenwick_symbol = symbol.map(|c| self.alphabet.iter().position(|x| x == c).unwrap());
         self.fenwick_model.update(fenwick_symbol.as_ref());
     }
+
+    const MAX_DENOMINATOR: Self::B = MAX_DENOMINATOR;
 }
 
 fn main() {

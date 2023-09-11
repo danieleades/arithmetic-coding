@@ -6,15 +6,14 @@ use super::Weights;
 use crate::ValueError;
 
 #[derive(Debug, Clone)]
-pub struct FenwickModel {
+pub struct FenwickModel<const MAX_DENOMINATOR: u64> {
     contexts: Vec<Weights>,
     current_context: usize,
-    max_denominator: u64,
 }
 
-impl FenwickModel {
+impl<const MAX_DENOMINATOR: u64> FenwickModel<MAX_DENOMINATOR> {
     #[must_use]
-    pub fn with_symbols(symbols: usize, max_denominator: u64) -> Self {
+    pub fn with_symbols(symbols: usize) -> Self {
         let mut contexts = Vec::with_capacity(symbols + 1);
 
         for _ in 0..=symbols {
@@ -24,7 +23,6 @@ impl FenwickModel {
         Self {
             contexts,
             current_context: 1,
-            max_denominator,
         }
     }
 
@@ -37,7 +35,7 @@ impl FenwickModel {
     }
 }
 
-impl Model for FenwickModel {
+impl<const MAX_DENOMINATOR: u64> Model for FenwickModel<MAX_DENOMINATOR> {
     type B = u64;
     type Symbol = usize;
     type ValueError = ValueError;
@@ -50,22 +48,20 @@ impl Model for FenwickModel {
         self.context().total
     }
 
-    fn max_denominator(&self) -> u64 {
-        self.max_denominator
-    }
-
     fn symbol(&self, value: u64) -> Option<usize> {
         self.context().symbol(value)
     }
 
     fn update(&mut self, symbol: Option<&usize>) {
         debug_assert!(
-            self.denominator() < self.max_denominator,
+            self.denominator() < MAX_DENOMINATOR,
             "hit max denominator!"
         );
-        if self.denominator() < self.max_denominator {
+        if self.denominator() < MAX_DENOMINATOR {
             self.context_mut().update(symbol.copied(), 1);
         }
         self.current_context = symbol.map(|x| x + 1).unwrap_or_default();
     }
+
+    const MAX_DENOMINATOR: Self::B = MAX_DENOMINATOR;
 }

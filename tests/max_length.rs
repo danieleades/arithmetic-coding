@@ -41,13 +41,11 @@ impl max_length::Model for MyModel {
         }
     }
 
-    fn max_denominator(&self) -> u32 {
-        4
-    }
-
     fn max_length(&self) -> usize {
         3
     }
+
+    const MAX_DENOMINATOR: Self::B = 4;
 }
 
 #[test_case(&[Symbol::A, Symbol::B] ; "shorter")]

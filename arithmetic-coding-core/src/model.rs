@@ -67,6 +67,14 @@ pub trait Model {
     /// The internal representation to use for storing integers
     type B: BitStore = u32;
 
+    /// The maximum denominator used for probability ranges. See
+    /// [`Model::probability`].
+    ///
+    /// This value is used to calculate an appropriate precision for the
+    /// encoding, therefore this value must not change, and
+    /// [`Model::denominator`] must never exceed it.
+    const MAX_DENOMINATOR: Self::B;
+
     /// Given a symbol, return an interval representing the probability of that
     /// symbol occurring.
     ///
@@ -98,16 +106,8 @@ pub trait Model {
     /// [`Encoder`](crate::Encoder) and [`Decoder`](crate::Decoder) to panic due
     /// to overflow or underflow.
     fn denominator(&self) -> Self::B {
-        self.max_denominator()
+        Self::MAX_DENOMINATOR
     }
-
-    /// The maximum denominator used for probability ranges. See
-    /// [`Model::probability`].
-    ///
-    /// This value is used to calculate an appropriate precision for the
-    /// encoding, therefore this value must not change, and
-    /// [`Model::denominator`] must never exceed it.
-    fn max_denominator(&self) -> Self::B;
 
     /// Given a value, return the symbol whose probability range it falls in.
     ///

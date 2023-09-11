@@ -40,9 +40,7 @@ mod integer {
             }
         }
 
-        fn max_denominator(&self) -> u32 {
-            4
-        }
+        const MAX_DENOMINATOR: Self::B = 4;
     }
 }
 
@@ -81,9 +79,7 @@ mod symbolic {
             }
         }
 
-        fn max_denominator(&self) -> u32 {
-            4
-        }
+        const MAX_DENOMINATOR: Self::B = 4;
     }
 }
 

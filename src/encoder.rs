@@ -46,7 +46,7 @@ where
     /// If these constraints cannot be satisfied this method will panic in debug
     /// builds
     pub fn new(model: M, bitwriter: &'a mut W) -> Self {
-        let frequency_bits = model.max_denominator().log2() + 1;
+        let frequency_bits = M::MAX_DENOMINATOR.log2() + 1;
         let precision = M::B::BITS - frequency_bits;
         Self::with_precision(model, bitwriter, precision)
     }
@@ -65,7 +65,7 @@ where
     /// If these constraints cannot be satisfied this method will panic in debug
     /// builds
     pub fn with_precision(model: M, bitwriter: &'a mut W, precision: u32) -> Self {
-        let frequency_bits = model.max_denominator().log2() + 1;
+        let frequency_bits = M::MAX_DENOMINATOR.log2() + 1;
         debug_assert!(
             (precision >= (frequency_bits + 2)),
             "not enough bits of precision to prevent overflow/underflow",
@@ -125,7 +125,7 @@ where
         let p = self.model.probability(symbol).map_err(Error::ValueError)?;
         let denominator = self.model.denominator();
         debug_assert!(
-            denominator <= self.model.max_denominator(),
+            denominator <= M::MAX_DENOMINATOR,
             "denominator is greater than maximum!"
         );
 

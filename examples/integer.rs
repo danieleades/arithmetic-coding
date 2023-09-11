@@ -37,9 +37,7 @@ impl Model for MyModel {
         }
     }
 
-    fn max_denominator(&self) -> u32 {
-        4
-    }
+    const MAX_DENOMINATOR: Self::B = 4;
 }
 
 fn main() {

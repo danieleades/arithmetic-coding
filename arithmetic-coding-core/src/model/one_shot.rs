@@ -69,6 +69,14 @@ pub trait Model {
     /// The internal representation to use for storing integers
     type B: BitStore = u32;
 
+    /// The maximum denominator used for probability ranges. See
+    /// [`Model::probability`].
+    ///
+    /// This value is used to calculate an appropriate precision for the
+    /// encoding, therefore this value must not change, and
+    /// [`Model::denominator`] must never exceed it.
+    const MAX_DENOMINATOR: Self::B;
+
     /// Given a symbol, return an interval representing the probability of that
     /// symbol occurring.
     ///
@@ -86,14 +94,6 @@ pub trait Model {
     ///
     /// This returns a custom error if the given symbol is not valid
     fn probability(&self, symbol: &Self::Symbol) -> Result<Range<Self::B>, Self::ValueError>;
-
-    /// The maximum denominator used for probability ranges. See
-    /// [`Model::probability`].
-    ///
-    /// This value is used to calculate an appropriate precision for the
-    /// encoding, therefore this value must not change, and
-    /// [`Model::denominator`] must never exceed it.
-    fn max_denominator(&self) -> Self::B;
 
     /// Given a value, return the symbol whose probability range it falls in.
     ///
@@ -115,10 +115,6 @@ where
         Model::probability(self, symbol)
     }
 
-    fn max_denominator(&self) -> Self::B {
-        self.max_denominator()
-    }
-
     fn symbol(&self, value: Self::B) -> Self::Symbol {
         Model::symbol(self, value)
     }
@@ -128,6 +124,8 @@ where
     }
 
     fn denominator(&self) -> Self::B {
-        self.max_denominator()
+        Self::MAX_DENOMINATOR
     }
+
+    const MAX_DENOMINATOR: Self::B = Self::MAX_DENOMINATOR;
 }

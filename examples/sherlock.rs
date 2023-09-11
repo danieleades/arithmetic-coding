@@ -7,14 +7,16 @@ mod common;
 const ALPHABET: &str =
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,\n-':()[]#*;\"!?*&é/àâè%@$";
 
+const ALPHABET_LEN: usize = ALPHABET.len();
+
 #[derive(Debug, Clone)]
-pub struct StringModel {
-    alphabet: Vec<char>,
+pub struct StringModel<'a, const ALPHABET_LEN: usize> {
+    alphabet: &'a str,
 }
 
-impl StringModel {
+impl<'a, const ALPHABET_LEN: usize> StringModel<'a, ALPHABET_LEN> {
     #[must_use]
-    pub fn new(alphabet: Vec<char>) -> Self {
+    pub fn new(alphabet: &'a str) -> Self {
         Self { alphabet }
     }
 }
@@ -23,14 +25,14 @@ impl StringModel {
 #[error("invalid character: {0}")]
 pub struct Error(char);
 
-impl Model for StringModel {
+impl<'a, const ALPHABET_LEN: usize> Model for StringModel<'a, ALPHABET_LEN> {
     type B = usize;
     type Symbol = char;
     type ValueError = Error;
 
     fn probability(&self, symbol: Option<&Self::Symbol>) -> Result<Range<usize>, Error> {
         if let Some(char) = symbol {
-            match self.alphabet.iter().position(|x| x == char) {
+            match self.alphabet.chars().position(|x| x == *char) {
                 Some(index) => Ok(index..(index + 1)),
                 None => Err(Error(*char)),
             }
@@ -41,12 +43,10 @@ impl Model for StringModel {
     }
 
     fn symbol(&self, value: usize) -> Option<Self::Symbol> {
-        self.alphabet.get(value).copied()
+        self.alphabet.chars().nth(value)
     }
 
-    fn max_denominator(&self) -> usize {
-        self.alphabet.len() + 1
-    }
+    const MAX_DENOMINATOR: Self::B = ALPHABET_LEN + 1;
 }
 
 fn main() {
@@ -55,7 +55,7 @@ fn main() {
     file.read_to_string(&mut input).unwrap();
     let input_bytes = input.bytes().len();
 
-    let model = StringModel::new(ALPHABET.chars().collect());
+    let model = StringModel::<ALPHABET_LEN>::new(ALPHABET);
 
     let buffer = common::encode(model.clone(), input.chars());
 

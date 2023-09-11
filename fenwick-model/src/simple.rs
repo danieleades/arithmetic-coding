@@ -7,23 +7,21 @@ use super::Weights;
 use crate::ValueError;
 
 #[derive(Debug, Clone)]
-pub struct FenwickModel {
+pub struct FenwickModel<const MAX_DENOMINATOR: u64> {
     weights: Weights,
-    max_denominator: u64,
     panic_on_saturation: bool,
 }
 
 #[must_use]
-pub struct Builder {
-    model: FenwickModel,
+pub struct Builder<const MAX_DENOMINATOR: u64> {
+    model: FenwickModel<MAX_DENOMINATOR>,
 }
 
-impl Builder {
-    fn new(n_symbols: usize, max_denominator: u64) -> Self {
+impl<const MAX_DENOMINATOR: u64> Builder<MAX_DENOMINATOR> {
+    fn new(n_symbols: usize) -> Self {
         let weights = Weights::new(n_symbols);
         let model = FenwickModel {
             weights,
-            max_denominator,
             panic_on_saturation: false,
         };
         Self { model }
@@ -35,18 +33,18 @@ impl Builder {
     }
 
     #[must_use]
-    pub fn build(self) -> FenwickModel {
+    pub fn build(self) -> FenwickModel<MAX_DENOMINATOR> {
         self.model
     }
 }
 
-impl FenwickModel {
-    pub fn builder(n_symbols: usize, max_denominator: u64) -> Builder {
-        Builder::new(n_symbols, max_denominator)
+impl<const MAX_DENOMINATOR: u64> FenwickModel<MAX_DENOMINATOR> {
+    pub fn builder(n_symbols: usize) -> Builder<MAX_DENOMINATOR> {
+        Builder::new(n_symbols)
     }
 }
 
-impl Model for FenwickModel {
+impl<const MAX_DENOMINATOR: u64> Model for FenwickModel<MAX_DENOMINATOR> {
     type B = u64;
     type Symbol = usize;
     type ValueError = ValueError;
@@ -66,10 +64,6 @@ impl Model for FenwickModel {
         }
     }
 
-    fn max_denominator(&self) -> Self::B {
-        self.max_denominator
-    }
-
     fn symbol(&self, value: Self::B) -> Option<Self::Symbol> {
         self.weights.symbol(value)
     }
@@ -81,12 +75,14 @@ impl Model for FenwickModel {
     fn update(&mut self, symbol: Option<&Self::Symbol>) {
         if self.panic_on_saturation {
             debug_assert!(
-                self.denominator() < self.max_denominator,
+                self.denominator() < MAX_DENOMINATOR,
                 "hit max denominator!"
             );
         }
-        if self.denominator() < self.max_denominator {
+        if self.denominator() < MAX_DENOMINATOR {
             self.weights.update(symbol.copied(), 1);
         }
     }
+
+    const MAX_DENOMINATOR: Self::B = MAX_DENOMINATOR;
 }
