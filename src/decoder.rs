@@ -1,6 +1,7 @@
 //! The [`Decoder`] half of the arithmetic coding library.
 
 use std::{io, ops::Range};
+use std::marker::PhantomData;
 
 use bitstream_io::BitRead;
 
@@ -18,7 +19,8 @@ where
     M: Model,
     R: BitRead,
 {
-    model: M,
+    /// The model used to predict the next symbol
+    pub model: M,
     state: State<M::B, R>,
 }
 
@@ -58,11 +60,11 @@ where
     ///
     /// If these constraints cannot be satisfied this method will panic in debug
     /// builds
-    pub fn new(model: M, input: R) -> Self {
+    pub fn new(model: M) -> Self {
         let frequency_bits = model.max_denominator().log2() + 1;
         let precision = M::B::BITS - frequency_bits;
 
-        Self::with_precision(model, input, precision)
+        Self::with_precision(model, precision)
     }
 
     /// Construct a new [`Decoder`] with a custom precision
@@ -78,7 +80,7 @@ where
     ///
     /// If these constraints cannot be satisfied this method will panic in debug
     /// builds
-    pub fn with_precision(model: M, input: R, precision: u32) -> Self {
+    pub fn with_precision(model: M, precision: u32) -> Self {
         let frequency_bits = model.max_denominator().log2() + 1;
         debug_assert!(
             (precision >= (frequency_bits + 2)),
@@ -89,7 +91,7 @@ where
             "not enough bits in BitStore to support the required precision",
         );
 
-        let state = State::new(precision, input);
+        let state = State::new(precision);
 
         Self { model, state }
     }
@@ -102,8 +104,8 @@ where
     /// Return an iterator over the decoded symbols.
     ///
     /// The iterator will continue returning symbols until EOF is reached
-    pub fn decode_all(&mut self) -> DecodeIter<M, R> {
-        DecodeIter { decoder: self }
+    pub fn decode_all<'a>(&'a mut self, input: &'a mut R) -> DecodeIter<M, R> {
+        DecodeIter { decoder: self, input}
     }
 
     /// Read the next symbol from the stream of bits
@@ -113,8 +115,8 @@ where
     /// # Errors
     ///
     /// This method can fail if the underlying [`BitRead`] cannot be read from.
-    pub fn decode(&mut self) -> io::Result<Option<M::Symbol>> {
-        self.state.initialise()?;
+    pub fn decode(&mut self, input: &mut R) -> io::Result<Option<M::Symbol>> {
+        self.state.initialise(input)?;
 
         let denominator = self.model.denominator();
         debug_assert!(
@@ -129,7 +131,7 @@ where
             .probability(symbol.as_ref())
             .expect("this should not be able to fail. Check the implementation of the model.");
 
-        self.state.scale(p, denominator)?;
+        self.state.scale(p, denominator, input)?;
         self.model.update(symbol.as_ref());
 
         Ok(symbol)
@@ -163,6 +165,7 @@ where
     R: BitRead,
 {
     decoder: &'a mut Decoder<M, R>,
+    input: &'a mut R,
 }
 
 impl<'a, M, R> Iterator for DecodeIter<'a, M, R>
@@ -173,7 +176,7 @@ where
     type Item = io::Result<M::Symbol>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.decoder.decode().transpose()
+        self.decoder.decode(self.input).transpose()
     }
 }
 
@@ -187,7 +190,7 @@ where
     precision: u32,
     low: B,
     high: B,
-    input: R,
+    _marker: PhantomData<R>,
     x: B,
     uninitialised: bool,
 }
@@ -198,7 +201,7 @@ where
     R: BitRead,
 {
     /// todo
-    pub fn new(precision: u32, input: R) -> Self {
+    pub fn new(precision: u32) -> Self {
         let low = B::ZERO;
         let high = B::ONE << precision;
         let x = B::ZERO;
@@ -207,7 +210,7 @@ where
             precision,
             low,
             high,
-            input,
+            _marker: PhantomData,
             x,
             uninitialised: true,
         }
@@ -225,7 +228,7 @@ where
         self.half() + self.quarter()
     }
 
-    fn normalise(&mut self) -> io::Result<()> {
+    fn normalise(&mut self, input: &mut R) -> io::Result<()> {
         while self.high < self.half() || self.low >= self.half() {
             if self.high < self.half() {
                 self.high <<= 1;
@@ -238,7 +241,7 @@ where
                 self.x = (self.x - self.half()) << 1;
             }
 
-            match self.input.next_bit()? {
+            match input.next_bit()? {
                 Some(true) => {
                     self.x += B::ONE;
                 }
@@ -251,7 +254,7 @@ where
             self.high = (self.high - self.quarter()) << 1;
             self.x = (self.x - self.quarter()) << 1;
 
-            match self.input.next_bit()? {
+            match input.next_bit()? {
                 Some(true) => {
                     self.x += B::ONE;
                 }
@@ -262,13 +265,13 @@ where
         Ok(())
     }
 
-    fn scale(&mut self, p: Range<B>, denominator: B) -> io::Result<()> {
+    fn scale(&mut self, p: Range<B>, denominator: B, input: &mut R) -> io::Result<()> {
         let range = self.high - self.low + B::ONE;
 
         self.high = self.low + (range * p.end) / denominator - B::ONE;
         self.low += (range * p.start) / denominator;
 
-        self.normalise()
+        self.normalise(input)
     }
 
     fn value(&self, denominator: B) -> B {
@@ -276,10 +279,10 @@ where
         ((self.x - self.low + B::ONE) * denominator - B::ONE) / range
     }
 
-    fn fill(&mut self) -> io::Result<()> {
+    fn fill(&mut self, input: &mut R) -> io::Result<()> {
         for _ in 0..self.precision {
             self.x <<= 1;
-            match self.input.next_bit()? {
+            match input.next_bit()? {
                 Some(true) => {
                     self.x += B::ONE;
                 }
@@ -289,9 +292,9 @@ where
         Ok(())
     }
 
-    fn initialise(&mut self) -> io::Result<()> {
+    fn initialise(&mut self, input: &mut R) -> io::Result<()> {
         if self.uninitialised {
-            self.fill()?;
+            self.fill(input)?;
             self.uninitialised = false;
         }
         Ok(())

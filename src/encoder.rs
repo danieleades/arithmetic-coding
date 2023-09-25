@@ -1,10 +1,12 @@
 //! The [`Encoder`] half of the arithmetic coding library.
 
 use std::{io, ops::Range};
+use std::marker::PhantomData;
 
 use bitstream_io::BitWrite;
 
 use crate::{BitStore, Error, Model};
+use crate::Error::ValueError;
 
 // this algorithm is derived from this article - https://marknelson.us/posts/2014/10/19/data-compression-with-arithmetic-coding.html
 
@@ -13,16 +15,17 @@ use crate::{BitStore, Error, Model};
 /// An arithmetic decoder converts a stream of symbols into a stream of bits,
 /// using a predictive [`Model`].
 #[derive(Debug)]
-pub struct Encoder<'a, M, W>
+pub struct Encoder< M, W>
 where
     M: Model,
     W: BitWrite,
 {
-    model: M,
-    state: State<'a, M::B, W>,
+    /// The model used for the encoder
+    pub model: M,
+    state: State< M::B, W>,
 }
 
-impl<'a, M, W> Encoder<'a, M, W>
+impl< M, W> Encoder< M, W>
 where
     M: Model,
     W: BitWrite,
@@ -45,10 +48,10 @@ where
     ///
     /// If these constraints cannot be satisfied this method will panic in debug
     /// builds
-    pub fn new(model: M, bitwriter: &'a mut W) -> Self {
+    pub fn new(model: M) -> Self {
         let frequency_bits = model.max_denominator().log2() + 1;
         let precision = M::B::BITS - frequency_bits;
-        Self::with_precision(model, bitwriter, precision)
+        Self::with_precision(model, precision)
     }
 
     /// Construct a new [`Encoder`] with a custom precision.
@@ -64,7 +67,7 @@ where
     ///
     /// If these constraints cannot be satisfied this method will panic in debug
     /// builds
-    pub fn with_precision(model: M, bitwriter: &'a mut W, precision: u32) -> Self {
+    pub fn with_precision(model: M, precision: u32) -> Self {
         let frequency_bits = model.max_denominator().log2() + 1;
         debug_assert!(
             (precision >= (frequency_bits + 2)),
@@ -77,12 +80,12 @@ where
 
         Self {
             model,
-            state: State::new(precision, bitwriter),
+            state: State::new(precision),
         }
     }
 
     /// todo
-    pub const fn with_state(state: State<'a, M::B, W>, model: M) -> Self {
+    pub const fn with_state(state: State< M::B, W>, model: M) -> Self {
         Self { model, state }
     }
 
@@ -98,12 +101,13 @@ where
     pub fn encode_all(
         &mut self,
         symbols: impl IntoIterator<Item = M::Symbol>,
-    ) -> Result<(), Error<M::ValueError>> {
+        output: &mut W,
+    ) -> Result<(), Error> {
         for symbol in symbols {
-            self.encode(Some(&symbol))?;
+            self.encode(Some(&symbol), output)?;
         }
-        self.encode(None)?;
-        self.flush()?;
+        self.encode(None, output)?;
+        self.flush(output)?;
         Ok(())
     }
 
@@ -118,15 +122,18 @@ where
     ///
     /// This method can fail if the underlying [`BitWrite`] cannot be written
     /// to.
-    pub fn encode(&mut self, symbol: Option<&M::Symbol>) -> Result<(), Error<M::ValueError>> {
-        let p = self.model.probability(symbol).map_err(Error::ValueError)?;
+    pub fn encode(&mut self, symbol: Option<&M::Symbol>, output: &mut W) -> Result<(), Error> {
+        let p = match self.model.probability(symbol) {
+            Ok(p) => {p}
+            Err(_) => {return Err(ValueError)}
+        } ;
         let denominator = self.model.denominator();
         debug_assert!(
             denominator <= self.model.max_denominator(),
             "denominator is greater than maximum!"
         );
 
-        self.state.scale(p, denominator)?;
+        self.state.scale(p, denominator, output)?;
         self.model.update(symbol);
 
         Ok(())
@@ -142,12 +149,12 @@ where
     ///
     /// This method can fail if the underlying [`BitWrite`] cannot be written
     /// to.
-    pub fn flush(&mut self) -> io::Result<()> {
-        self.state.flush()
+    pub fn flush(&mut self, output: &mut W) -> io::Result<()> {
+        self.state.flush(output)
     }
 
     /// todo
-    pub fn into_inner(self) -> (M, State<'a, M::B, W>) {
+    pub fn into_inner(self) -> (M, State<M::B, W>) {
         (self.model, self.state)
     }
 
@@ -155,7 +162,7 @@ where
     ///
     /// Allows for chaining multiple sequences of symbols into a single stream
     /// of bits
-    pub fn chain<X>(self, model: X) -> Encoder<'a, X, W>
+    pub fn chain<X>(self, model: X) -> Encoder< X, W>
     where
         X: Model<B = M::B>,
     {
@@ -168,7 +175,7 @@ where
 
 /// A convenience struct which stores the internal state of an [`Encoder`].
 #[derive(Debug)]
-pub struct State<'a, B, W>
+pub struct State< B, W>
 where
     B: BitStore,
     W: BitWrite,
@@ -177,16 +184,16 @@ where
     low: B,
     high: B,
     pending: u32,
-    output: &'a mut W,
+    _marker: PhantomData<W>,
 }
 
-impl<'a, B, W> State<'a, B, W>
+impl<B, W> State< B, W>
 where
     B: BitStore,
     W: BitWrite,
 {
     /// todo
-    pub fn new(precision: u32, output: &'a mut W) -> Self {
+    pub fn new(precision: u32) -> Self {
         let low = B::ZERO;
         let high = B::ONE << precision;
         let pending = 0;
@@ -196,7 +203,7 @@ where
             low,
             high,
             pending,
-            output,
+            _marker: PhantomData,
         }
     }
 
@@ -212,24 +219,24 @@ where
         B::ONE << (self.precision - 2)
     }
 
-    fn scale(&mut self, p: Range<B>, denominator: B) -> io::Result<()> {
+    fn scale(&mut self, p: Range<B>, denominator: B, output: &mut W) -> io::Result<()> {
         let range = self.high - self.low + B::ONE;
 
         self.high = self.low + (range * p.end) / denominator - B::ONE;
         self.low += (range * p.start) / denominator;
 
-        self.normalise()
+        self.normalise(output)
     }
 
-    fn normalise(&mut self) -> io::Result<()> {
+    fn normalise(&mut self, output: &mut W) -> io::Result<()> {
         while self.high < self.half() || self.low >= self.half() {
             if self.high < self.half() {
-                self.emit(false)?;
+                self.emit(false, output)?;
                 self.high <<= 1;
                 self.low <<= 1;
             } else {
                 // self.low >= self.half()
-                self.emit(true)?;
+                self.emit(true, output)?;
                 self.low = (self.low - self.half()) << 1;
                 self.high = (self.high - self.half()) << 1;
             }
@@ -244,22 +251,22 @@ where
         Ok(())
     }
 
-    fn emit(&mut self, bit: bool) -> io::Result<()> {
-        self.output.write_bit(bit)?;
+    fn emit(&mut self, bit: bool, output: &mut W) -> io::Result<()> {
+        output.write_bit(bit)?;
         for _ in 0..self.pending {
-            self.output.write_bit(!bit)?;
+            output.write_bit(!bit)?;
         }
         self.pending = 0;
         Ok(())
     }
 
     /// todo
-    pub fn flush(&mut self) -> io::Result<()> {
+    pub fn flush(&mut self, output: &mut W) -> io::Result<()> {
         self.pending += 1;
         if self.low <= self.quarter() {
-            self.emit(false)?;
+            self.emit(false, output)?;
         } else {
-            self.emit(true)?;
+            self.emit(true, output)?;
         }
 
         Ok(())
