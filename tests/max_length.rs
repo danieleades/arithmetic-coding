@@ -52,7 +52,7 @@ impl max_length::Model for MyModel {
 
 #[test_case(&[Symbol::A, Symbol::B] ; "shorter")]
 #[test_case(&[Symbol::A, Symbol::B, Symbol::C] ; "exact")]
-#[test_case(&[Symbol::A, Symbol::B, Symbol::C, Symbol::C] => panics ; "longer")]
+#[test_case(&[Symbol::A, Symbol::B, Symbol::C, Symbol::C] => panics "UnexpectedSymbol" ; "longer")]
 fn round_trip(input: &[Symbol]) {
     common::round_trip(max_length::Wrapper::new(MyModel), input);
 }

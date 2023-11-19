@@ -19,15 +19,18 @@ impl Model for StringModel {
     type Symbol = char;
     type ValueError = Error;
 
+    #[allow(clippy::range_plus_one)]
     fn probability(&self, symbol: Option<&Self::Symbol>) -> Result<Range<Self::B>, Error> {
-        if let Some(char) = symbol {
-            match ALPHABET.chars().position(|x| &x == char) {
-                Some(index) => Ok(index..(index + 1)),
-                None => Err(Error(*char)),
-            }
-        } else {
-            Ok(ALPHABET.len()..(ALPHABET.len() + 1))
-        }
+        symbol.map_or_else(
+            || Ok(ALPHABET.len()..(ALPHABET.len() + 1)),
+            |char| {
+                ALPHABET
+                    .chars()
+                    .position(|x| &x == char)
+                    .ok_or(Error(*char))
+                    .map(|index| index..(index + 1))
+            },
+        )
     }
 
     fn symbol(&self, value: Self::B) -> Option<Self::Symbol> {
