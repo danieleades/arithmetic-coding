@@ -110,7 +110,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "UnexpectedSymbol")]
     fn range_out_of_bounds() {
         let weights = Weights::new(3);
         weights.range(Some(3));
@@ -126,7 +126,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "UnexpectedSymbol")]
     fn symbol_out_of_bounds() {
         let weights = Weights::new(3);
         weights.symbol(4);

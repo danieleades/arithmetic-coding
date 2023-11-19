@@ -2,11 +2,8 @@
 
 #![deny(
     missing_docs,
-    clippy::all,
     missing_debug_implementations,
-    clippy::cargo
 )]
-#![warn(clippy::pedantic)]
 
 pub use arithmetic_coding_core::{fixed_length, max_length, one_shot, BitStore, Model};
 

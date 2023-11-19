@@ -9,16 +9,21 @@ categories = ["compression", "encoding", "parsing"]
 repository = "https://github.com/danieleades/arithmetic-coding"
 
 [workspace]
-members = [
-    ".",
-    "arithmetic-coding-core",
-    "fenwick-model",
-]
+members = [".", "arithmetic-coding-core", "fenwick-model"]
+
+[workspace.dependencies]
+thiserror = "1.0.30"
+
+[workspace.lints.clippy]
+cargo = "deny"
+all = "deny"
+nursery = "warn"
+pedantic = "warn"
 
 [dependencies]
 arithmetic-coding-core = { path = "./arithmetic-coding-core", version = "0.3.0" }
 bitstream-io = "1.2.0"
-thiserror = "1.0.30"
+thiserror = { workspace = true }
 
 [dev-dependencies]
 fenwick-model = { path = "./fenwick-model" }
@@ -28,3 +33,6 @@ test-case = "3.0.0"
 [[bench]]
 name = "sherlock"
 harness = false
+
+[lints]
+workspace = true
