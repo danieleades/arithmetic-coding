@@ -5,7 +5,7 @@ use arithmetic_coding::Model;
 mod common;
 
 const ALPHABET: &str =
-    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,\n-':()[]#*;\"!?*&é/àâè%@$";
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,\n\r-':()[]#*;\"!?*&é/àâè%@$";
 
 #[derive(Debug, Clone)]
 pub struct StringModel;
