@@ -113,6 +113,7 @@ where
     /// # Errors
     ///
     /// This method can fail if the underlying [`BitRead`] cannot be read from.
+    #[allow(clippy::missing_panics_doc)]
     pub fn decode(&mut self) -> io::Result<Option<M::Symbol>> {
         self.state.initialise()?;
 
