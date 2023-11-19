@@ -38,7 +38,9 @@ impl Model for StringModel {
     }
 
     fn symbol(&self, value: Self::B) -> Option<Self::Symbol> {
-        self.fenwick_model.symbol(value).map(|x| u8::try_from(x).unwrap())
+        self.fenwick_model
+            .symbol(value)
+            .map(|x| u8::try_from(x).unwrap())
     }
 
     fn max_denominator(&self) -> Self::B {
