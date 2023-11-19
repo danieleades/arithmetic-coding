@@ -57,10 +57,9 @@ jobs:
       - uses: dtolnay/rust-toolchain@nightly
         with:
           components: clippy
-      - uses: actions-rs/clippy-check@v1
+      - uses: actions-rs-plus/clippy-check@v2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          args: --all-features --tests --examples
+          args: --all --all-features --all-targets
 
   # docs:
   #   name: docs
