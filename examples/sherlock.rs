@@ -28,16 +28,20 @@ impl Model for StringModel {
     type Symbol = char;
     type ValueError = Error;
 
+    #[allow(clippy::range_plus_one)]
     fn probability(&self, symbol: Option<&Self::Symbol>) -> Result<Range<usize>, Error> {
-        if let Some(char) = symbol {
-            match self.alphabet.iter().position(|x| x == char) {
-                Some(index) => Ok(index..(index + 1)),
-                None => Err(Error(*char)),
-            }
-        } else {
-            let alphabet_length = self.alphabet.len();
-            Ok(alphabet_length..(alphabet_length + 1))
-        }
+        symbol.map_or_else(
+            || {
+                let alphabet_length = self.alphabet.len();
+                Ok(alphabet_length..(alphabet_length + 1))
+            },
+            |char| {
+                self.alphabet
+                    .iter()
+                    .position(|x| x == char)
+                    .map_or(Err(Error(*char)), |index| Ok(index..(index + 1)))
+            },
+        )
     }
 
     fn symbol(&self, value: usize) -> Option<Self::Symbol> {

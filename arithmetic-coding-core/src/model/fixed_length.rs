@@ -163,13 +163,12 @@ where
         symbol: Option<&Self::Symbol>,
     ) -> Result<Range<Self::B>, Self::ValueError> {
         if self.remaining > 0 {
-            if let Some(s) = symbol {
-                // Expected a symbol and got one. return the probability.
-                self.model.probability(s).map_err(Self::ValueError::Value)
-            } else {
+            symbol.map_or(
                 // We are expecting more symbols, but got an EOF
-                Err(Self::ValueError::UnexpectedEof)
-            }
+                Err(Self::ValueError::UnexpectedEof),
+                // Expected a symbol and got one. return the probability.
+                |s| self.model.probability(s).map_err(Self::ValueError::Value),
+            )
         } else if symbol.is_some() {
             // we should be finished, but got an extra symbol
             Err(Error::UnexpectedSymbol)
