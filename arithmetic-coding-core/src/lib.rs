@@ -1,12 +1,6 @@
 //! Core traits for the [`arithmetic-coding`](https://github.com/danieleades/arithmetic-coding) crate
 
-#![deny(
-    missing_docs,
-    clippy::all,
-    missing_debug_implementations,
-    clippy::cargo
-)]
-#![warn(clippy::pedantic)]
+#![deny(missing_docs, missing_debug_implementations)]
 #![feature(associated_type_defaults)]
 
 mod bitstore;
