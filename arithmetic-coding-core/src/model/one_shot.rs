@@ -7,10 +7,12 @@ use crate::{fixed_length, BitStore};
 
 /// A [`Model`] is used to calculate the probability of a given symbol occuring
 /// in a sequence. The [`Model`] is used both for encoding and decoding. A
-/// 'fixed-length' model always expects an exact number of symbols, and so does
+/// 'one-shot' only ever encodes a single symbol, and so does
 /// not need to encode an EOF symbol.
 ///
-/// A fixed length model can be converted into a regular model using the
+/// A one-shot [`Model`] is a special case of the [`fixed_length::Model`].
+///
+/// A one-shot model can be converted into a regular model using the
 /// convenience [`Wrapper`] type.
 ///
 /// The more accurately a [`Model`] is able to predict the next symbol, the
