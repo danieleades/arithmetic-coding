@@ -135,7 +135,7 @@ pub trait Model {
     fn max_length(&self) -> usize;
 }
 
-/// A wrapper which converts a [`fixed_length::Model`](Model) to a
+/// A wrapper which converts a [`max_length::Model`](Model) to a
 /// [`crate::Model`].
 #[derive(Debug, Clone)]
 pub struct Wrapper<M>
@@ -150,7 +150,7 @@ impl<M> Wrapper<M>
 where
     M: Model,
 {
-    /// Construct a new wrapper from a [`fixed_length::Model`](Model)
+    /// Construct a new wrapper from a [`Model`]
     pub fn new(model: M) -> Self {
         let remaining = model.max_length();
         Self { model, remaining }
