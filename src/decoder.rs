@@ -185,9 +185,7 @@ where
     B: BitStore,
     R: BitRead,
 {
-    precision: u32,
-    low: B,
-    high: B,
+    state: crate::state::State<B>,
     input: R,
     x: B,
     uninitialised: bool,
@@ -200,43 +198,28 @@ where
 {
     /// todo
     pub fn new(precision: u32, input: R) -> Self {
-        let low = B::ZERO;
-        let high = B::ONE << precision;
+        let state = crate::state::State::new(precision);
         let x = B::ZERO;
 
         Self {
-            precision,
-            low,
-            high,
+            state,
             input,
             x,
             uninitialised: true,
         }
     }
 
-    fn half(&self) -> B {
-        B::ONE << (self.precision - 1)
-    }
-
-    fn quarter(&self) -> B {
-        B::ONE << (self.precision - 2)
-    }
-
-    fn three_quarter(&self) -> B {
-        self.half() + self.quarter()
-    }
-
     fn normalise(&mut self) -> io::Result<()> {
-        while self.high < self.half() || self.low >= self.half() {
-            if self.high < self.half() {
-                self.high <<= 1;
-                self.low <<= 1;
+        while self.state.high < self.state.half() || self.state.low >= self.state.half() {
+            if self.state.high < self.state.half() {
+                self.state.high <<= 1;
+                self.state.low <<= 1;
                 self.x <<= 1;
             } else {
                 // self.low >= self.half()
-                self.low = (self.low - self.half()) << 1;
-                self.high = (self.high - self.half()) << 1;
-                self.x = (self.x - self.half()) << 1;
+                self.state.low = (self.state.low - self.state.half()) << 1;
+                self.state.high = (self.state.high - self.state.half()) << 1;
+                self.x = (self.x - self.state.half()) << 1;
             }
 
             if self.input.next_bit()? == Some(true) {
@@ -244,10 +227,12 @@ where
             }
         }
 
-        while self.low >= self.quarter() && self.high < (self.three_quarter()) {
-            self.low = (self.low - self.quarter()) << 1;
-            self.high = (self.high - self.quarter()) << 1;
-            self.x = (self.x - self.quarter()) << 1;
+        while self.state.low >= self.state.quarter()
+            && self.state.high < (self.state.three_quarter())
+        {
+            self.state.low = (self.state.low - self.state.quarter()) << 1;
+            self.state.high = (self.state.high - self.state.quarter()) << 1;
+            self.x = (self.x - self.state.quarter()) << 1;
 
             if self.input.next_bit()? == Some(true) {
                 self.x += B::ONE;
@@ -258,21 +243,17 @@ where
     }
 
     fn scale(&mut self, p: Range<B>, denominator: B) -> io::Result<()> {
-        let range = self.high - self.low + B::ONE;
-
-        self.high = self.low + (range * p.end) / denominator - B::ONE;
-        self.low += (range * p.start) / denominator;
-
+        self.state.scale(p, denominator);
         self.normalise()
     }
 
     fn value(&self, denominator: B) -> B {
-        let range = self.high - self.low + B::ONE;
-        ((self.x - self.low + B::ONE) * denominator - B::ONE) / range
+        let range = self.state.high - self.state.low + B::ONE;
+        ((self.x - self.state.low + B::ONE) * denominator - B::ONE) / range
     }
 
     fn fill(&mut self) -> io::Result<()> {
-        for _ in 0..self.precision {
+        for _ in 0..self.state.precision {
             self.x <<= 1;
             if self.input.next_bit()? == Some(true) {
                 self.x += B::ONE;

@@ -176,9 +176,7 @@ where
     B: BitStore,
     W: BitWrite,
 {
-    precision: u32,
-    low: B,
-    high: B,
+    state: crate::state::State<B>,
     pending: u32,
     output: &'a mut W,
 }
@@ -193,57 +191,40 @@ where
     /// Normally this would be done automatically using the [`Encoder::new`]
     /// method.
     pub fn new(precision: u32, output: &'a mut W) -> Self {
-        let low = B::ZERO;
-        let high = B::ONE << precision;
+        let state = crate::state::State::new(precision);
         let pending = 0;
 
         Self {
-            precision,
-            low,
-            high,
+            state,
             pending,
             output,
         }
     }
 
-    fn three_quarter(&self) -> B {
-        self.half() + self.quarter()
-    }
-
-    fn half(&self) -> B {
-        B::ONE << (self.precision - 1)
-    }
-
-    fn quarter(&self) -> B {
-        B::ONE << (self.precision - 2)
-    }
-
     fn scale(&mut self, p: Range<B>, denominator: B) -> io::Result<()> {
-        let range = self.high - self.low + B::ONE;
-
-        self.high = self.low + (range * p.end) / denominator - B::ONE;
-        self.low += (range * p.start) / denominator;
-
+        self.state.scale(p, denominator);
         self.normalise()
     }
 
     fn normalise(&mut self) -> io::Result<()> {
-        while self.high < self.half() || self.low >= self.half() {
-            if self.high < self.half() {
+        while self.state.high < self.state.half() || self.state.low >= self.state.half() {
+            if self.state.high < self.state.half() {
                 self.emit(false)?;
-                self.high <<= 1;
-                self.low <<= 1;
+                self.state.high <<= 1;
+                self.state.low <<= 1;
             } else {
                 self.emit(true)?;
-                self.low = (self.low - self.half()) << 1;
-                self.high = (self.high - self.half()) << 1;
+                self.state.low = (self.state.low - self.state.half()) << 1;
+                self.state.high = (self.state.high - self.state.half()) << 1;
             }
         }
 
-        while self.low >= self.quarter() && self.high < (self.three_quarter()) {
+        while self.state.low >= self.state.quarter()
+            && self.state.high < (self.state.three_quarter())
+        {
             self.pending += 1;
-            self.low = (self.low - self.quarter()) << 1;
-            self.high = (self.high - self.quarter()) << 1;
+            self.state.low = (self.state.low - self.state.quarter()) << 1;
+            self.state.high = (self.state.high - self.state.quarter()) << 1;
         }
 
         Ok(())
@@ -258,14 +239,16 @@ where
         Ok(())
     }
 
-    /// Flush the internal buffer and write all remaining bits to the output
+    /// Flush the internal buffer and write all remaining bits to the output.
+    /// This method MUST be called when you finish writing symbols to ensure
+    /// they are fully written to the output.
     ///
     /// # Errors
     ///
     /// This method can fail if the output cannot be written to
     pub fn flush(&mut self) -> io::Result<()> {
         self.pending += 1;
-        if self.low <= self.quarter() {
+        if self.state.low <= self.state.quarter() {
             self.emit(false)?;
         } else {
             self.emit(true)?;

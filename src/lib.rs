@@ -6,6 +6,7 @@ pub use arithmetic_coding_core::{fixed_length, max_length, one_shot, BitStore, M
 
 pub mod decoder;
 pub mod encoder;
+mod state;
 
 pub use decoder::Decoder;
 pub use encoder::Encoder;
