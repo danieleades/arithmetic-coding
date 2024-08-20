@@ -239,11 +239,8 @@ where
                 self.x = (self.x - self.half()) << 1;
             }
 
-            match self.input.next_bit()? {
-                Some(true) => {
-                    self.x += B::ONE;
-                }
-                Some(false) | None => (),
+            if self.input.next_bit()? == Some(true) {
+                self.x += B::ONE;
             }
         }
 
@@ -252,11 +249,8 @@ where
             self.high = (self.high - self.quarter()) << 1;
             self.x = (self.x - self.quarter()) << 1;
 
-            match self.input.next_bit()? {
-                Some(true) => {
-                    self.x += B::ONE;
-                }
-                Some(false) | None => (),
+            if self.input.next_bit()? == Some(true) {
+                self.x += B::ONE;
             }
         }
 
@@ -280,11 +274,8 @@ where
     fn fill(&mut self) -> io::Result<()> {
         for _ in 0..self.precision {
             self.x <<= 1;
-            match self.input.next_bit()? {
-                Some(true) => {
-                    self.x += B::ONE;
-                }
-                Some(false) | None => (),
+            if self.input.next_bit()? == Some(true) {
+                self.x += B::ONE;
             }
         }
         Ok(())

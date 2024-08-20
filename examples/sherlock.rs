@@ -14,7 +14,7 @@ pub struct StringModel {
 
 impl StringModel {
     #[must_use]
-    pub fn new(alphabet: Vec<char>) -> Self {
+    pub const fn new(alphabet: Vec<char>) -> Self {
         Self { alphabet }
     }
 }
