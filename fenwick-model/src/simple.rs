@@ -55,14 +55,10 @@ impl Model for FenwickModel {
         &self,
         symbol: Option<&Self::Symbol>,
     ) -> Result<std::ops::Range<Self::B>, Self::ValueError> {
-        if let Some(s) = symbol.copied() {
-            if s >= self.weights.len() {
-                Err(ValueError(s))
-            } else {
-                Ok(self.weights.range(Some(s)))
-            }
-        } else {
-            Ok(self.weights.range(None))
+        match symbol {
+            None => Ok(self.weights.range(None)),
+            Some(&s) if s < self.weights.len() => Ok(self.weights.range(Some(s))),
+            Some(&s) => Err(ValueError(s)),
         }
     }
 
