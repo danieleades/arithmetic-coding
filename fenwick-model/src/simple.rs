@@ -55,16 +55,11 @@ impl Model for FenwickModel {
         &self,
         symbol: Option<&Self::Symbol>,
     ) -> Result<std::ops::Range<Self::B>, Self::ValueError> {
-        symbol.copied().map_or_else(
-            || Ok(self.weights.range(None)),
-            |s| {
-                if s >= self.weights.len() {
-                    Err(ValueError(s))
-                } else {
-                    Ok(self.weights.range(Some(s)))
-                }
-            },
-        )
+        match symbol {
+            None => Ok(self.weights.range(None)),
+            Some(&s) if s < self.weights.len() => Ok(self.weights.range(Some(s))),
+            Some(&s) => Err(ValueError(s)),
+        }
     }
 
     fn max_denominator(&self) -> Self::B {
