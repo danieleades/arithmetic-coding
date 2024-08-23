@@ -62,12 +62,17 @@ impl Weights {
             return None;
         }
 
-        // invariant: low <= our answer < high
         // we seek the lowest number i such that prefix_sum(i) > prefix_sum
         let mut low = 0;
         let mut high = self.len();
-        debug_assert!(low < high);
-        debug_assert!(prefix_sum < self.prefix_sum(Some(high - 1)));
+        // Ensure the search range is valid (low < high)
+        debug_assert!(low < high, "Invalid search range");
+
+        // Verify that prefix_sum is within the valid range of cumulative weights
+        debug_assert!(
+            prefix_sum < self.prefix_sum(Some(high - 1)),
+            "'prefix_sum' is out of bounds"
+        );
         while low + 1 < high {
             let i = (low + high - 1) / 2;
             if self.prefix_sum(Some(i)) > prefix_sum {
@@ -110,7 +115,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "index out of bounds: the len is 4 but the index is 4")]
     fn range_out_of_bounds() {
         let weights = Weights::new(3);
         weights.range(Some(3));
@@ -126,7 +131,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "'prefix_sum' is out of bounds")]
     fn symbol_out_of_bounds() {
         let weights = Weights::new(3);
         weights.symbol(4);
