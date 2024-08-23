@@ -38,3 +38,9 @@ jobs:
       - uses: actions-rs-plus/clippy-check@v2
         with:
           args: --all --all-features --all-targets
+
+  cargo-deny:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: EmbarkStudios/cargo-deny-action@v1

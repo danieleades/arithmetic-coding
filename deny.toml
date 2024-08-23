@@ -1,0 +1,18 @@
+[graph]
+all-features = true
+
+[advisories]
+yanked = "deny"
+
+[licenses]
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Unicode-DFS-2016",
+    #"BSD-3-Clause",
+]
+confidence-threshold = 1.0
+
+[bans]
+wildcards = "deny"
+highlight = "all"
