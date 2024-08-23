@@ -4,7 +4,7 @@ use std::{io, ops::Range};
 
 use bitstream_io::BitWrite;
 
-use crate::{BitStore, Error, Model};
+use crate::{common, BitStore, Error, Model};
 
 // this algorithm is derived from this article - https://marknelson.us/posts/2014/10/19/data-compression-with-arithmetic-coding.html
 
@@ -176,7 +176,7 @@ where
     B: BitStore,
     W: BitWrite,
 {
-    state: crate::state::State<B>,
+    state: common::State<B>,
     pending: u32,
     output: &'a mut W,
 }
@@ -191,7 +191,7 @@ where
     /// Normally this would be done automatically using the [`Encoder::new`]
     /// method.
     pub fn new(precision: u32, output: &'a mut W) -> Self {
-        let state = crate::state::State::new(precision);
+        let state = common::State::new(precision);
         let pending = 0;
 
         Self {

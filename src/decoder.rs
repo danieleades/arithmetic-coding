@@ -4,7 +4,7 @@ use std::{io, ops::Range};
 
 use bitstream_io::BitRead;
 
-use crate::{BitStore, Model};
+use crate::{common, BitStore, Model};
 
 // this algorithm is derived from this article - https://marknelson.us/posts/2014/10/19/data-compression-with-arithmetic-coding.html
 
@@ -185,7 +185,7 @@ where
     B: BitStore,
     R: BitRead,
 {
-    state: crate::state::State<B>,
+    state: common::State<B>,
     input: R,
     x: B,
     uninitialised: bool,
@@ -198,7 +198,7 @@ where
 {
     /// todo
     pub fn new(precision: u32, input: R) -> Self {
-        let state = crate::state::State::new(precision);
+        let state = common::State::new(precision);
         let x = B::ZERO;
 
         Self {
