@@ -42,7 +42,6 @@ impl Model for MyModel {
     fn max_denominator(&self) -> u32 {
         4
     }
-
 }
 
 fn main() {

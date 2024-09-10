@@ -13,9 +13,7 @@ pub use encoder::Encoder;
 
 /// Errors that can occur during encoding/decoding
 #[derive(Debug, thiserror::Error)]
-pub enum Error
-where
-    {
+pub enum Error {
     /// Io error when reading/writing bits from a stream
     #[error("io error")]
     Io(#[from] std::io::Error),

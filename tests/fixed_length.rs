@@ -44,7 +44,6 @@ impl fixed_length::Model for MyModel {
     fn length(&self) -> usize {
         3
     }
-
 }
 
 #[test]

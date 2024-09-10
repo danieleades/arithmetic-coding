@@ -46,7 +46,6 @@ impl max_length::Model for MyModel {
     fn max_length(&self) -> usize {
         3
     }
-
 }
 
 fn main() {

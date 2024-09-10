@@ -18,7 +18,7 @@ where
     M: Model,
     W: BitWrite,
 {
-    model: M ,
+    model: M,
     state: State<'a, M::B, W>,
 }
 
@@ -122,7 +122,9 @@ where
     /// This method can fail if the underlying [`BitWrite`] cannot be written
     /// to.
     pub fn encode(&mut self, symbol: Option<&M::Symbol>) -> Result<(), Error> {
-        let p = self.model.probability(symbol)
+        let p = self
+            .model
+            .probability(symbol)
             .map_err(|e| Error::ValueError(Box::new(e)))?;
         let denominator = self.model.denominator();
         debug_assert!(

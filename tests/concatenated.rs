@@ -1,4 +1,3 @@
-
 use arithmetic_coding::{Decoder, Encoder, Model};
 use bitstream_io::{BigEndian, BitRead, BitReader, BitWrite, BitWriter};
 use symbolic::Symbol;
@@ -43,7 +42,6 @@ mod integer {
         fn max_denominator(&self) -> u32 {
             4
         }
-
     }
 }
 

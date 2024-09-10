@@ -47,7 +47,6 @@ impl max_length::Model for MyModel {
     fn max_length(&self) -> usize {
         3
     }
-
 }
 
 #[test_case(&[Symbol::A, Symbol::B] ; "shorter")]
