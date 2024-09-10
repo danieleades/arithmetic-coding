@@ -18,6 +18,7 @@ pub struct MyModel;
 impl max_length::Model for MyModel {
     type Symbol = Symbol;
     type ValueError = Infallible;
+    type B = u32;
 
     fn probability(&self, symbol: Option<&Self::Symbol>) -> Result<Range<u32>, Self::ValueError> {
         match symbol {
@@ -46,7 +47,6 @@ impl max_length::Model for MyModel {
         3
     }
 
-    type B = u32;
 }
 
 fn main() {

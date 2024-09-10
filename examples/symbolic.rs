@@ -18,6 +18,7 @@ pub struct MyModel;
 impl Model for MyModel {
     type Symbol = Symbol;
     type ValueError = Infallible;
+    type B = u32;
 
     fn probability(&self, symbol: Option<&Self::Symbol>) -> Result<Range<u32>, Infallible> {
         Ok(match symbol {
@@ -42,7 +43,6 @@ impl Model for MyModel {
         4
     }
 
-    type B = u32;
 }
 
 fn main() {

@@ -16,6 +16,7 @@ mod integer {
     impl arithmetic_coding::Model for Model {
         type Symbol = u8;
         type ValueError = Error;
+        type B = u32;
 
         fn probability(&self, symbol: Option<&Self::Symbol>) -> Result<Range<u32>, Error> {
             match symbol {
@@ -41,7 +42,6 @@ mod integer {
             4
         }
 
-        type B = u32;
     }
 }
 
@@ -61,6 +61,7 @@ mod symbolic {
     impl arithmetic_coding::Model for Model {
         type Symbol = Symbol;
         type ValueError = Infallible;
+        type B = u32;
 
         fn probability(&self, symbol: Option<&Self::Symbol>) -> Result<Range<u32>, Infallible> {
             Ok(match symbol {
@@ -85,7 +86,6 @@ mod symbolic {
             4
         }
 
-        type B = u32;
     }
 }
 
