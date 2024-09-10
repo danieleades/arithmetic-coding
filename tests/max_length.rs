@@ -1,5 +1,4 @@
-use std::convert::Infallible;
-use std::ops::Range;
+use std::{convert::Infallible, ops::Range};
 
 use arithmetic_coding::max_length;
 use test_case::test_case;
@@ -17,9 +16,9 @@ pub enum Symbol {
 pub struct MyModel;
 
 impl max_length::Model for MyModel {
+    type B = u32;
     type Symbol = Symbol;
     type ValueError = Infallible;
-    type B = u32;
 
     fn probability(&self, symbol: Option<&Self::Symbol>) -> Result<Range<u32>, Self::ValueError> {
         match symbol {

@@ -15,9 +15,9 @@ mod integer {
     pub struct Error(u8);
 
     impl arithmetic_coding::Model for Model {
+        type B = u32;
         type Symbol = u8;
         type ValueError = Error;
-        type B = u32;
 
         fn probability(&self, symbol: Option<&Self::Symbol>) -> Result<Range<u32>, Error> {
             match symbol {
@@ -46,8 +46,7 @@ mod integer {
 }
 
 mod symbolic {
-    use std::convert::Infallible;
-    use std::ops::Range;
+    use std::{convert::Infallible, ops::Range};
 
     #[derive(Debug, PartialEq, Eq)]
     pub enum Symbol {
@@ -59,9 +58,9 @@ mod symbolic {
     pub struct Model;
 
     impl arithmetic_coding::Model for Model {
+        type B = u32;
         type Symbol = Symbol;
         type ValueError = Infallible;
-        type B = u32;
 
         fn probability(&self, symbol: Option<&Self::Symbol>) -> Result<Range<u32>, Infallible> {
             Ok(match symbol {

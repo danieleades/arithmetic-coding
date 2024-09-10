@@ -29,9 +29,9 @@ pub mod one_shot;
 /// pub struct MyModel;
 ///
 /// impl Model for MyModel {
+///     type B = u32;
 ///     type Symbol = Symbol;
 ///     type ValueError = Infallible;
-///     type B = u32;
 ///
 ///     fn probability(&self, symbol: Option<&Self::Symbol>) -> Result<Range<u32>, Infallible> {
 ///         Ok(match symbol {
