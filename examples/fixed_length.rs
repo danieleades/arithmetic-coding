@@ -1,5 +1,4 @@
-#![feature(never_type)]
-
+use std::convert::Infallible;
 use std::ops::Range;
 
 use arithmetic_coding::fixed_length;
@@ -18,7 +17,7 @@ pub struct MyModel;
 
 impl fixed_length::Model for MyModel {
     type Symbol = Symbol;
-    type ValueError = !;
+    type ValueError = Infallible;
 
     fn probability(&self, symbol: &Self::Symbol) -> Result<Range<u32>, Self::ValueError> {
         match symbol {
@@ -44,6 +43,8 @@ impl fixed_length::Model for MyModel {
     fn length(&self) -> usize {
         3
     }
+
+    type B = u32;
 }
 
 fn main() {

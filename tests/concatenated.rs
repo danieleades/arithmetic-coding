@@ -1,4 +1,3 @@
-#![feature(never_type)]
 
 use arithmetic_coding::{Decoder, Encoder, Model};
 use bitstream_io::{BigEndian, BitRead, BitReader, BitWrite, BitWriter};
@@ -43,10 +42,13 @@ mod integer {
         fn max_denominator(&self) -> u32 {
             4
         }
+
+        type B = u32;
     }
 }
 
 mod symbolic {
+    use std::convert::Infallible;
     use std::ops::Range;
 
     #[derive(Debug, PartialEq, Eq)]
@@ -60,9 +62,9 @@ mod symbolic {
 
     impl arithmetic_coding::Model for Model {
         type Symbol = Symbol;
-        type ValueError = !;
+        type ValueError = std::convert::Infallible;
 
-        fn probability(&self, symbol: Option<&Self::Symbol>) -> Result<Range<u32>, !> {
+        fn probability(&self, symbol: Option<&Self::Symbol>) -> Result<Range<u32>, Infallible> {
             Ok(match symbol {
                 None => 0..1,
                 Some(&Symbol::A) => 1..2,
@@ -84,6 +86,8 @@ mod symbolic {
         fn max_denominator(&self) -> u32 {
             4
         }
+
+        type B = u32;
     }
 }
 

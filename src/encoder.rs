@@ -101,7 +101,7 @@ where
     pub fn encode_all(
         &mut self,
         symbols: impl IntoIterator<Item = M::Symbol>,
-    ) -> Result<(), Error<M::ValueError>> {
+    ) -> Result<(), Error> {
         for symbol in symbols {
             self.encode(Some(&symbol))?;
         }
@@ -121,8 +121,8 @@ where
     ///
     /// This method can fail if the underlying [`BitWrite`] cannot be written
     /// to.
-    pub fn encode(&mut self, symbol: Option<&M::Symbol>) -> Result<(), Error<M::ValueError>> {
-        let p = self.model.probability(symbol).map_err(Error::ValueError)?;
+    pub fn encode(&mut self, symbol: Option<&M::Symbol>) -> Result<(), Error> {
+        let p = self.model.probability(symbol).unwrap();
         let denominator = self.model.denominator();
         debug_assert!(
             denominator <= self.model.max_denominator(),

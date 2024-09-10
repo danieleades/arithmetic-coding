@@ -1,5 +1,4 @@
-#![feature(never_type)]
-
+use std::convert::Infallible;
 use std::ops::Range;
 
 use arithmetic_coding::max_length;
@@ -19,7 +18,7 @@ pub struct MyModel;
 
 impl max_length::Model for MyModel {
     type Symbol = Symbol;
-    type ValueError = !;
+    type ValueError = Infallible;
 
     fn probability(&self, symbol: Option<&Self::Symbol>) -> Result<Range<u32>, Self::ValueError> {
         match symbol {
@@ -47,6 +46,8 @@ impl max_length::Model for MyModel {
     fn max_length(&self) -> usize {
         3
     }
+
+    type B = u32;
 }
 
 #[test_case(&[Symbol::A, Symbol::B] ; "shorter")]

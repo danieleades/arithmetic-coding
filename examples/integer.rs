@@ -38,6 +38,8 @@ impl Model for MyModel {
     fn max_denominator(&self) -> u32 {
         4
     }
+
+    type B = u32;
 }
 
 fn main() {
