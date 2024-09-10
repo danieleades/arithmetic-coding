@@ -24,7 +24,7 @@ where
 
 impl<'a, M, W> Encoder<'a, M, W>
 where
-    M: Model+std::error::Error,
+    M: Model,
     W: BitWrite,
 {
     /// Construct a new [`Encoder`].
@@ -101,7 +101,7 @@ where
     pub fn encode_all(
         &mut self,
         symbols: impl IntoIterator<Item = M::Symbol>,
-    ) -> Result<(), Error<M>> {
+    ) -> Result<(), Error> {
         for symbol in symbols {
             self.encode(Some(&symbol))?;
         }
@@ -121,8 +121,8 @@ where
     ///
     /// This method can fail if the underlying [`BitWrite`] cannot be written
     /// to.
-    pub fn encode(&mut self, symbol: Option<&M::Symbol>) -> Result<(), Error<M>> {
-        let p = self.model.probability(symbol).map_err(|e| Error::ValueError(e))?;
+    pub fn encode(&mut self, symbol: Option<&M::Symbol>) -> Result<(), Error> {
+        let p = self.model.probability(symbol).map_err(|e| Error::ValueError(Box::new(e)))?;
         let denominator = self.model.denominator();
         debug_assert!(
             denominator <= self.model.max_denominator(),

@@ -62,7 +62,7 @@ pub trait Model {
     type Symbol;
 
     /// Invalid symbol error
-    type ValueError: Error;
+    type ValueError: Error + 'static;
 
     /// The internal representation to use for storing integers
     type B: BitStore;

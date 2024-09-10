@@ -66,7 +66,7 @@ pub trait Model {
     type Symbol;
 
     /// Invalid symbol error
-    type ValueError: std::error::Error;
+    type ValueError: std::error::Error + 'static;
 
     /// The internal representation to use for storing integers
     type B: BitStore;
