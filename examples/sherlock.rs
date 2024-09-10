@@ -14,7 +14,7 @@ pub struct StringModel {
 
 impl StringModel {
     #[must_use]
-    pub fn new(alphabet: Vec<char>) -> Self {
+    pub const fn new(alphabet: Vec<char>) -> Self {
         Self { alphabet }
     }
 }
@@ -24,27 +24,32 @@ impl StringModel {
 pub struct Error(char);
 
 impl Model for StringModel {
+    type B = usize;
     type Symbol = char;
     type ValueError = Error;
 
-    fn probability(&self, symbol: Option<&Self::Symbol>) -> Result<Range<u32>, Error> {
-        if let Some(char) = symbol {
-            match self.alphabet.iter().position(|x| x == char) {
-                Some(index) => Ok((index as u32)..(index as u32 + 1)),
-                None => Err(Error(*char)),
-            }
-        } else {
-            let alphabet_length = self.alphabet.len() as u32;
-            Ok(alphabet_length..(alphabet_length + 1))
-        }
+    #[allow(clippy::range_plus_one)]
+    fn probability(&self, symbol: Option<&Self::Symbol>) -> Result<Range<usize>, Error> {
+        symbol.map_or_else(
+            || {
+                let alphabet_length = self.alphabet.len();
+                Ok(alphabet_length..(alphabet_length + 1))
+            },
+            |char| {
+                self.alphabet
+                    .iter()
+                    .position(|x| x == char)
+                    .map_or(Err(Error(*char)), |index| Ok(index..(index + 1)))
+            },
+        )
     }
 
-    fn symbol(&self, value: u32) -> Option<Self::Symbol> {
-        self.alphabet.get(value as usize).copied()
+    fn symbol(&self, value: usize) -> Option<Self::Symbol> {
+        self.alphabet.get(value).copied()
     }
 
-    fn max_denominator(&self) -> u32 {
-        self.alphabet.len() as u32 + 1
+    fn max_denominator(&self) -> usize {
+        self.alphabet.len() + 1
     }
 }
 
@@ -63,10 +68,9 @@ fn main() {
     println!("input bytes: {input_bytes}");
     println!("output bytes: {output_bytes}");
 
-    println!(
-        "compression ratio: {}",
-        input_bytes as f32 / output_bytes as f32
-    );
+    #[allow(clippy::cast_precision_loss)]
+    let compression_ratio = input_bytes as f32 / output_bytes as f32;
+    println!("compression ratio: {compression_ratio}");
 
     // println!("buffer: {:?}", &buffer);
 

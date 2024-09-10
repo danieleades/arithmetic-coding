@@ -1,12 +1,10 @@
 //! The [`Encoder`] half of the arithmetic coding library.
 
 use std::{io, ops::Range};
-use std::marker::PhantomData;
 
 use bitstream_io::BitWrite;
 
-use crate::{BitStore, Error, Model};
-use crate::Error::ValueError;
+use crate::{common, BitStore, Error, Model};
 
 // this algorithm is derived from this article - https://marknelson.us/posts/2014/10/19/data-compression-with-arithmetic-coding.html
 
@@ -15,17 +13,16 @@ use crate::Error::ValueError;
 /// An arithmetic decoder converts a stream of symbols into a stream of bits,
 /// using a predictive [`Model`].
 #[derive(Debug)]
-pub struct Encoder< M, W>
+pub struct Encoder<'a, M, W>
 where
     M: Model,
     W: BitWrite,
 {
-    /// The model used for the encoder
-    pub model: M,
-    state: State< M::B, W>,
+    model: M,
+    state: State<'a, M::B, W>,
 }
 
-impl< M, W> Encoder< M, W>
+impl<'a, M, W> Encoder<'a, M, W>
 where
     M: Model,
     W: BitWrite,
@@ -48,10 +45,10 @@ where
     ///
     /// If these constraints cannot be satisfied this method will panic in debug
     /// builds
-    pub fn new(model: M) -> Self {
+    pub fn new(model: M, bitwriter: &'a mut W) -> Self {
         let frequency_bits = model.max_denominator().log2() + 1;
         let precision = M::B::BITS - frequency_bits;
-        Self::with_precision(model, precision)
+        Self::with_precision(model, bitwriter, precision)
     }
 
     /// Construct a new [`Encoder`] with a custom precision.
@@ -67,7 +64,7 @@ where
     ///
     /// If these constraints cannot be satisfied this method will panic in debug
     /// builds
-    pub fn with_precision(model: M, precision: u32) -> Self {
+    pub fn with_precision(model: M, bitwriter: &'a mut W, precision: u32) -> Self {
         let frequency_bits = model.max_denominator().log2() + 1;
         debug_assert!(
             (precision >= (frequency_bits + 2)),
@@ -80,12 +77,15 @@ where
 
         Self {
             model,
-            state: State::new(precision),
+            state: State::new(precision, bitwriter),
         }
     }
 
-    /// todo
-    pub const fn with_state(state: State< M::B, W>, model: M) -> Self {
+    /// Create an encoder from an existing [`State`].
+    ///
+    /// This is useful for manually chaining a shared buffer through multiple
+    /// encoders.
+    pub const fn with_state(state: State<'a, M::B, W>, model: M) -> Self {
         Self { model, state }
     }
 
@@ -101,13 +101,12 @@ where
     pub fn encode_all(
         &mut self,
         symbols: impl IntoIterator<Item = M::Symbol>,
-        output: &mut W,
-    ) -> Result<(), Error> {
+    ) -> Result<(), Error<M::ValueError>> {
         for symbol in symbols {
-            self.encode(Some(&symbol), output)?;
+            self.encode(Some(&symbol))?;
         }
-        self.encode(None, output)?;
-        self.flush(output)?;
+        self.encode(None)?;
+        self.flush()?;
         Ok(())
     }
 
@@ -122,18 +121,15 @@ where
     ///
     /// This method can fail if the underlying [`BitWrite`] cannot be written
     /// to.
-    pub fn encode(&mut self, symbol: Option<&M::Symbol>, output: &mut W) -> Result<(), Error> {
-        let p = match self.model.probability(symbol) {
-            Ok(p) => {p}
-            Err(_) => {return Err(ValueError)}
-        } ;
+    pub fn encode(&mut self, symbol: Option<&M::Symbol>) -> Result<(), Error<M::ValueError>> {
+        let p = self.model.probability(symbol).map_err(Error::ValueError)?;
         let denominator = self.model.denominator();
         debug_assert!(
             denominator <= self.model.max_denominator(),
             "denominator is greater than maximum!"
         );
 
-        self.state.scale(p, denominator, output)?;
+        self.state.scale(p, denominator)?;
         self.model.update(symbol);
 
         Ok(())
@@ -149,12 +145,12 @@ where
     ///
     /// This method can fail if the underlying [`BitWrite`] cannot be written
     /// to.
-    pub fn flush(&mut self, output: &mut W) -> io::Result<()> {
-        self.state.flush(output)
+    pub fn flush(&mut self) -> io::Result<()> {
+        self.state.flush()
     }
 
     /// todo
-    pub fn into_inner(self) -> (M, State<M::B, W>) {
+    pub fn into_inner(self) -> (M, State<'a, M::B, W>) {
         (self.model, self.state)
     }
 
@@ -162,7 +158,7 @@ where
     ///
     /// Allows for chaining multiple sequences of symbols into a single stream
     /// of bits
-    pub fn chain<X>(self, model: X) -> Encoder< X, W>
+    pub fn chain<X>(self, model: X) -> Encoder<'a, X, W>
     where
         X: Model<B = M::B>,
     {
@@ -175,98 +171,87 @@ where
 
 /// A convenience struct which stores the internal state of an [`Encoder`].
 #[derive(Debug)]
-pub struct State< B, W>
+pub struct State<'a, B, W>
 where
     B: BitStore,
     W: BitWrite,
 {
-    precision: u32,
-    low: B,
-    high: B,
+    state: common::State<B>,
     pending: u32,
-    _marker: PhantomData<W>,
+    output: &'a mut W,
 }
 
-impl<B, W> State< B, W>
+impl<'a, B, W> State<'a, B, W>
 where
     B: BitStore,
     W: BitWrite,
 {
-    /// todo
-    pub fn new(precision: u32) -> Self {
-        let low = B::ZERO;
-        let high = B::ONE << precision;
+    /// Manually construct a [`State`].
+    ///
+    /// Normally this would be done automatically using the [`Encoder::new`]
+    /// method.
+    pub fn new(precision: u32, output: &'a mut W) -> Self {
+        let state = common::State::new(precision);
         let pending = 0;
 
         Self {
-            precision,
-            low,
-            high,
+            state,
             pending,
-            _marker: PhantomData,
+            output,
         }
     }
 
-    fn three_quarter(&self) -> B {
-        self.half() + self.quarter()
+    fn scale(&mut self, p: Range<B>, denominator: B) -> io::Result<()> {
+        self.state.scale(p, denominator);
+        self.normalise()
     }
 
-    fn half(&self) -> B {
-        B::ONE << (self.precision - 1)
-    }
-
-    fn quarter(&self) -> B {
-        B::ONE << (self.precision - 2)
-    }
-
-    fn scale(&mut self, p: Range<B>, denominator: B, output: &mut W) -> io::Result<()> {
-        let range = self.high - self.low + B::ONE;
-
-        self.high = self.low + (range * p.end) / denominator - B::ONE;
-        self.low += (range * p.start) / denominator;
-
-        self.normalise(output)
-    }
-
-    fn normalise(&mut self, output: &mut W) -> io::Result<()> {
-        while self.high < self.half() || self.low >= self.half() {
-            if self.high < self.half() {
-                self.emit(false, output)?;
-                self.high <<= 1;
-                self.low <<= 1;
+    fn normalise(&mut self) -> io::Result<()> {
+        while self.state.high < self.state.half() || self.state.low >= self.state.half() {
+            if self.state.high < self.state.half() {
+                self.emit(false)?;
+                self.state.high <<= 1;
+                self.state.low <<= 1;
             } else {
-                // self.low >= self.half()
-                self.emit(true, output)?;
-                self.low = (self.low - self.half()) << 1;
-                self.high = (self.high - self.half()) << 1;
+                self.emit(true)?;
+                self.state.low = (self.state.low - self.state.half()) << 1;
+                self.state.high = (self.state.high - self.state.half()) << 1;
             }
         }
 
-        while self.low >= self.quarter() && self.high < (self.three_quarter()) {
+        while self.state.low >= self.state.quarter()
+            && self.state.high < (self.state.three_quarter())
+        {
             self.pending += 1;
-            self.low = (self.low - self.quarter()) << 1;
-            self.high = (self.high - self.quarter()) << 1;
+            self.state.low = (self.state.low - self.state.quarter()) << 1;
+            self.state.high = (self.state.high - self.state.quarter()) << 1;
         }
 
         Ok(())
     }
 
-    fn emit(&mut self, bit: bool, output: &mut W) -> io::Result<()> {
-        output.write_bit(bit)?;
+    fn emit(&mut self, bit: bool) -> io::Result<()> {
+        self.output.write_bit(bit)?;
         for _ in 0..self.pending {
-            output.write_bit(!bit)?;
+            self.output.write_bit(!bit)?;
         }
         self.pending = 0;
         Ok(())
     }
 
-    /// todo
-    pub fn flush(&mut self, output: &mut W) -> io::Result<()> {
+    /// Flush the internal buffer and write all remaining bits to the output.
+    /// This method MUST be called when you finish writing symbols to ensure
+    /// they are fully written to the output.
+    ///
+    /// # Errors
+    ///
+    /// This method can fail if the output cannot be written to
+    pub fn flush(&mut self) -> io::Result<()> {
         self.pending += 1;
-        if self.low <= self.quarter() {
-            self.emit(false, output)?;
+        if self.state.low <= self.state.quarter() {
+            self.emit(false)?;
         } else {
-            self.emit(true, output)?;
+            self.emit(true)?;
         }
 
         Ok(())

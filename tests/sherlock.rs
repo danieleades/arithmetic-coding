@@ -5,7 +5,7 @@ use arithmetic_coding::Model;
 mod common;
 
 const ALPHABET: &str =
-    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,\n-':()[]#*;\"!?*&é/àâè%@$";
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,\n\r-':()[]#*;\"!?*&é/àâè%@$";
 
 #[derive(Debug, Clone)]
 pub struct StringModel;
@@ -15,27 +15,30 @@ pub struct StringModel;
 pub struct Error(char);
 
 impl Model for StringModel {
+    type B = usize;
     type Symbol = char;
     type ValueError = Error;
 
+    #[allow(clippy::range_plus_one)]
     fn probability(&self, symbol: Option<&Self::Symbol>) -> Result<Range<Self::B>, Error> {
-        if let Some(char) = symbol {
-            match ALPHABET.chars().position(|x| &x == char) {
-                Some(index) => Ok((index as u32)..(index as u32 + 1)),
-                None => Err(Error(*char)),
-            }
-        } else {
-            let alphabet_length = ALPHABET.len() as u32;
-            Ok(alphabet_length..(alphabet_length + 1))
-        }
+        symbol.map_or_else(
+            || Ok(ALPHABET.len()..(ALPHABET.len() + 1)),
+            |char| {
+                ALPHABET
+                    .chars()
+                    .position(|x| &x == char)
+                    .ok_or(Error(*char))
+                    .map(|index| index..(index + 1))
+            },
+        )
     }
 
     fn symbol(&self, value: Self::B) -> Option<Self::Symbol> {
-        ALPHABET.chars().nth(value as usize)
+        ALPHABET.chars().nth(value)
     }
 
     fn max_denominator(&self) -> Self::B {
-        ALPHABET.len() as u32 + 1
+        ALPHABET.len() + 1
     }
 }
 

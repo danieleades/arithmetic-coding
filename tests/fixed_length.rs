@@ -1,4 +1,3 @@
-#![feature(exclusive_range_pattern)]
 #![feature(never_type)]
 
 use std::ops::Range;
@@ -55,7 +54,7 @@ fn round_trip() {
 }
 
 #[test]
-#[should_panic]
+#[should_panic(expected = "UnexpectedSymbol")]
 fn round_trip_fail() {
     // this is too many symbols for this model
     let input = &[

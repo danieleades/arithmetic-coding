@@ -15,3 +15,5 @@ This crate is heavily inspired by
 
 - [arcode-rs](https://github.com/cgburgess/arcode-rs)
 - [Data Compression With Arithmetic Coding - *Mark Nelson*, 2014](https://marknelson.us/posts/2014/10/19/data-compression-with-arithmetic-coding.html)
+
+*Was this useful? [Buy me a coffee](https://github.com/sponsors/danieleades/sponsorships?sponsor=danieleades&preview=true&frequency=recurring&amount=5)*

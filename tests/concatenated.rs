@@ -1,4 +1,3 @@
-#![feature(exclusive_range_pattern)]
 #![feature(never_type)]
 
 use arithmetic_coding::{Decoder, Encoder, Model};

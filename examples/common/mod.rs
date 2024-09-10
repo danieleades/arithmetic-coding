@@ -57,10 +57,9 @@ where
     println!("input bytes: {input_bytes}");
     println!("output bytes: {output_bytes}");
 
-    println!(
-        "compression ratio: {}",
-        input_bytes as f32 / output_bytes as f32
-    );
+    #[allow(clippy::cast_precision_loss)]
+    let compression_ratio = input_bytes as f32 / output_bytes as f32;
+    println!("compression ratio: {compression_ratio}");
 
     let output = decode(model, &buffer);
 

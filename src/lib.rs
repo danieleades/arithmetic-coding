@@ -1,15 +1,10 @@
 //! Arithmetic coding library
 
-#![deny(
-    missing_docs,
-    clippy::all,
-    missing_debug_implementations,
-    clippy::cargo
-)]
-#![warn(clippy::pedantic)]
+#![deny(missing_docs, missing_debug_implementations)]
 
 pub use arithmetic_coding_core::{fixed_length, max_length, one_shot, BitStore, Model};
 
+mod common;
 pub mod decoder;
 pub mod encoder;
 
