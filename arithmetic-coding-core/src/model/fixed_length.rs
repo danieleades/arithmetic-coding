@@ -37,6 +37,7 @@ use crate::BitStore;
 /// impl fixed_length::Model for MyModel {
 ///     type Symbol = Symbol;
 ///     type ValueError = !;
+///     type B = u32;
 ///
 ///     fn probability(&self, symbol: &Self::Symbol) -> Result<Range<u32>, !> {
 ///         Ok(match symbol {
