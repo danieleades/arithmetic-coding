@@ -4,8 +4,10 @@ use std::ops::Range;
 
 use crate::BitStore;
 
-/// A [`Model`] is used to calculate the probability of a given symbol occuring
-/// in a sequence. The [`Model`] is used both for encoding and decoding. A
+/// A [`Model`] is used to calculate the probability of a given symbol occurring
+/// in a sequence.
+///
+/// The [`Model`] is used both for encoding and decoding. A
 /// 'fixed-length' model always expects an exact number of symbols, and so does
 /// not need to encode an EOF symbol.
 ///
@@ -19,7 +21,7 @@ use crate::BitStore;
 ///
 /// ```
 /// # use std::convert::Infallible;
-/// use std::ops::Range;
+/// # use std::ops::Range;
 /// #
 /// # use arithmetic_coding_core::fixed_length;
 ///
@@ -124,7 +126,7 @@ pub trait Model {
     /// no-op by default.
     fn update(&mut self, _symbol: &Self::Symbol) {}
 
-    /// The total number of sumbols to encode
+    /// The total number of symbols to encode
     fn length(&self) -> usize;
 }
 
