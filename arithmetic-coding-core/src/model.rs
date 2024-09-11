@@ -32,6 +32,7 @@ pub mod one_shot;
 /// impl Model for MyModel {
 ///     type Symbol = Symbol;
 ///     type ValueError = !;
+///     type B = u32;
 ///
 ///     fn probability(&self, symbol: Option<&Self::Symbol>) -> Result<Range<u32>, !> {
 ///         Ok(match symbol {
