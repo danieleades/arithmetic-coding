@@ -16,6 +16,7 @@ mod integer {
     pub struct Error(u8);
 
     impl arithmetic_coding::Model for Model {
+        type B = u32;
         type Symbol = u8;
         type ValueError = Error;
 
@@ -58,6 +59,7 @@ mod symbolic {
     pub struct Model;
 
     impl arithmetic_coding::Model for Model {
+        type B = u32;
         type Symbol = Symbol;
         type ValueError = !;
 
