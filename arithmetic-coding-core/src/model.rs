@@ -30,6 +30,7 @@ pub mod one_shot;
 /// pub struct MyModel;
 ///
 /// impl Model for MyModel {
+///     type B = u32;
 ///     type Symbol = Symbol;
 ///     type ValueError = !;
 ///
@@ -65,7 +66,7 @@ pub trait Model {
     type ValueError: Error;
 
     /// The internal representation to use for storing integers
-    type B: BitStore = u32;
+    type B: BitStore;
 
     /// Given a symbol, return an interval representing the probability of that
     /// symbol occurring.

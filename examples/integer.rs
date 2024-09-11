@@ -12,6 +12,7 @@ pub struct MyModel;
 pub struct Error(u8);
 
 impl Model for MyModel {
+    type B = u32;
     type Symbol = u8;
     type ValueError = Error;
 

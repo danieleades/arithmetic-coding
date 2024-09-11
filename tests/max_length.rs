@@ -18,6 +18,7 @@ pub enum Symbol {
 pub struct MyModel;
 
 impl max_length::Model for MyModel {
+    type B = u32;
     type Symbol = Symbol;
     type ValueError = !;
 

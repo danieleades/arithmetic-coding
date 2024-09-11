@@ -20,7 +20,6 @@ use crate::BitStore;
 /// # Example
 ///
 /// ```
-/// #![feature(exclusive_range_pattern)]
 /// #![feature(never_type)]
 /// # use std::ops::Range;
 /// #
@@ -35,6 +34,7 @@ use crate::BitStore;
 /// pub struct MyModel;
 ///
 /// impl fixed_length::Model for MyModel {
+///     type B = u32;
 ///     type Symbol = Symbol;
 ///     type ValueError = !;
 ///
@@ -72,7 +72,7 @@ pub trait Model {
     type ValueError: std::error::Error;
 
     /// The internal representation to use for storing integers
-    type B: BitStore = u32;
+    type B: BitStore;
 
     /// Given a symbol, return an interval representing the probability of that
     /// symbol occurring.
