@@ -23,7 +23,6 @@ use crate::{fixed_length, BitStore};
 /// # Example
 ///
 /// ```
-/// #![feature(exclusive_range_pattern)]
 /// #![feature(never_type)]
 /// # use std::ops::Range;
 /// #
@@ -38,6 +37,7 @@ use crate::{fixed_length, BitStore};
 /// pub struct MyModel;
 ///
 /// impl one_shot::Model for MyModel {
+///     type B = u32;
 ///     type Symbol = Symbol;
 ///     type ValueError = !;
 ///
