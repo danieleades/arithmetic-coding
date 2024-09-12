@@ -16,6 +16,6 @@ repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-arithmetic-coding-core = { path = "../arithmetic-coding-core", version = "0.3.0" }
+arithmetic-coding-core = { path = "../arithmetic-coding-core", version = "0.4.0" }
 fenwick = "2.0.0"
 thiserror = { workspace = true }
