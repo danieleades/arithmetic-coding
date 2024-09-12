@@ -1,5 +1,3 @@
-#![feature(never_type)]
-
 use arithmetic_coding::{Decoder, Encoder, Model};
 use bitstream_io::{BigEndian, BitRead, BitReader, BitWrite, BitWriter};
 use symbolic::Symbol;
@@ -48,7 +46,7 @@ mod integer {
 }
 
 mod symbolic {
-    use std::ops::Range;
+    use std::{convert::Infallible, ops::Range};
 
     #[derive(Debug, PartialEq, Eq)]
     pub enum Symbol {
@@ -62,9 +60,9 @@ mod symbolic {
     impl arithmetic_coding::Model for Model {
         type B = u32;
         type Symbol = Symbol;
-        type ValueError = !;
+        type ValueError = Infallible;
 
-        fn probability(&self, symbol: Option<&Self::Symbol>) -> Result<Range<u32>, !> {
+        fn probability(&self, symbol: Option<&Self::Symbol>) -> Result<Range<u32>, Infallible> {
             Ok(match symbol {
                 None => 0..1,
                 Some(&Symbol::A) => 1..2,

@@ -15,9 +15,8 @@ pub mod one_shot;
 /// # Example
 ///
 /// ```
-/// #![feature(exclusive_range_pattern)]
-/// #![feature(never_type)]
-/// # use std::ops::Range;
+/// # use std::convert::Infallible;
+/// use std::ops::Range;
 /// #
 /// # use arithmetic_coding_core::Model;
 ///
@@ -32,9 +31,9 @@ pub mod one_shot;
 /// impl Model for MyModel {
 ///     type B = u32;
 ///     type Symbol = Symbol;
-///     type ValueError = !;
+///     type ValueError = Infallible;
 ///
-///     fn probability(&self, symbol: Option<&Self::Symbol>) -> Result<Range<u32>, !> {
+///     fn probability(&self, symbol: Option<&Self::Symbol>) -> Result<Range<u32>, Infallible> {
 ///         Ok(match symbol {
 ///             None => 0..1,
 ///             Some(&Symbol::A) => 1..2,

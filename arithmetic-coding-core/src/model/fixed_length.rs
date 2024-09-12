@@ -20,7 +20,7 @@ use crate::BitStore;
 /// # Example
 ///
 /// ```
-/// #![feature(never_type)]
+/// # use std::convert::Infallible;
 /// # use std::ops::Range;
 /// #
 /// # use arithmetic_coding_core::fixed_length;
@@ -36,9 +36,9 @@ use crate::BitStore;
 /// impl fixed_length::Model for MyModel {
 ///     type B = u32;
 ///     type Symbol = Symbol;
-///     type ValueError = !;
+///     type ValueError = Infallible;
 ///
-///     fn probability(&self, symbol: &Self::Symbol) -> Result<Range<u32>, !> {
+///     fn probability(&self, symbol: &Self::Symbol) -> Result<Range<u32>, Infallible> {
 ///         Ok(match symbol {
 ///             Symbol::A => 0..1,
 ///             Symbol::B => 1..2,
