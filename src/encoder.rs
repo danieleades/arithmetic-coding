@@ -4,7 +4,7 @@ use std::{io, ops::Range};
 
 use bitstream_io::BitWrite;
 
-use crate::{common, BitStore, Error, Model};
+use crate::{BitStore, Error, Model, common};
 
 // this algorithm is derived from this article - https://marknelson.us/posts/2014/10/19/data-compression-with-arithmetic-coding.html
 
