@@ -1,8 +1,8 @@
 use std::{fs::File, hint::black_box, io::Read, ops::Range};
 
 use arithmetic_coding::Model;
-use criterion::{criterion_group, criterion_main, Criterion};
-use fenwick_model::{simple::FenwickModel, ValueError};
+use criterion::{Criterion, criterion_group, criterion_main};
+use fenwick_model::{ValueError, simple::FenwickModel};
 
 mod common;
 
