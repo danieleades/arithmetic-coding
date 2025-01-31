@@ -102,7 +102,7 @@ where
     /// Return an iterator over the decoded symbols.
     ///
     /// The iterator will continue returning symbols until EOF is reached
-    pub fn decode_all(&mut self) -> DecodeIter<M, R> {
+    pub const fn decode_all(&mut self) -> DecodeIter<M, R> {
         DecodeIter { decoder: self }
     }
 
