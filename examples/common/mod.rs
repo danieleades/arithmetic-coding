@@ -48,7 +48,7 @@ pub fn round_trip_string<M>(model: M, input: &str)
 where
     M: Model<Symbol = char> + Clone,
 {
-    let input_bytes = input.bytes().len();
+    let input_bytes = input.len();
 
     let buffer = encode(model.clone(), input.chars());
 
