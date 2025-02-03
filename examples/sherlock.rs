@@ -57,7 +57,7 @@ fn main() {
     let mut file = File::open("./resources/sherlock.txt").unwrap();
     let mut input = String::new();
     file.read_to_string(&mut input).unwrap();
-    let input_bytes = input.bytes().len();
+    let input_bytes = input.len();
 
     let model = StringModel::new(ALPHABET.chars().collect());
 
