@@ -1,7 +1,7 @@
 # Arithmetic Coding
 
+[![Continuous integration](https://github.com/danieleades/arithmetic-coding/actions/workflows/CI.yml/badge.svg)](https://github.com/danieleades/arithmetic-coding/actions/workflows/CI.yml)
 [![Latest Docs](https://docs.rs/arithmetic-coding/badge.svg)](https://docs.rs/arithmetic-coding/)
-![Continuous integration](https://github.com/danieleades/arithmetic-coding/workflows/Continuous%20integration/badge.svg)
 [![codecov](https://codecov.io/gh/danieleades/arithmetic-coding/branch/main/graph/badge.svg?token=1qITX2tR0J)](https://codecov.io/gh/danieleades/arithmetic-coding)
 
 
