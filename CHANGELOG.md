@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1](https://github.com/danieleades/arithmetic-coding/compare/arithmetic-coding-v0.4.0...arithmetic-coding-v0.4.1) - 2025-02-08
+
+### Other
+
+- *(docs)* update CI badge in readme (#75)
+- *(lints)* count string characters directly (#74)
+- *(deps)* commit lock file to VCS (#73)
+- *(deps)* update thiserror requirement from 1.0.30 to 2.0.3 (#70)
+- *(deps)* bump codecov/codecov-action from 4 to 5 (#71)
+
 ## [0.4.0](https://github.com/danieleades/arithmetic-coding/compare/arithmetic-coding-v0.3.1...arithmetic-coding-v0.4.0) - 2024-09-12
 
 ### Added
