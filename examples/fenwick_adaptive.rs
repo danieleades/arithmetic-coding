@@ -4,7 +4,7 @@ use arithmetic_coding::Model;
 
 mod common;
 
-use fenwick_model::{simple::FenwickModel, ValueError};
+use fenwick_model::{ValueError, simple::FenwickModel};
 
 const ALPHABET: &str =
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,\n-':()[]#*;\"!?*&é/àâè%@$";
