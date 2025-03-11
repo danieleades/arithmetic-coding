@@ -4,7 +4,10 @@ use std::{io, ops::Range};
 
 use bitstream_io::BitRead;
 
-use crate::{common, BitStore, Model};
+use crate::{
+    common::{self, assert_precision_sufficient},
+    BitStore, Model,
+};
 
 // this algorithm is derived from this article - https://marknelson.us/posts/2014/10/19/data-compression-with-arithmetic-coding.html
 
@@ -79,23 +82,15 @@ where
     /// If these constraints cannot be satisfied this method will panic in debug
     /// builds
     pub fn with_precision(model: M, input: R, precision: u32) -> Self {
-        let frequency_bits = model.max_denominator().log2() + 1;
-        debug_assert!(
-            (precision >= (frequency_bits + 2)),
-            "not enough bits of precision to prevent overflow/underflow",
-        );
-        debug_assert!(
-            (frequency_bits + precision) <= M::B::BITS,
-            "not enough bits in BitStore to support the required precision",
-        );
-
         let state = State::new(precision, input);
-
-        Self { model, state }
+        Self::with_state(state, model)
     }
 
     /// todo
-    pub const fn with_state(state: State<M::B, R>, model: M) -> Self {
+    pub fn with_state(state: State<M::B, R>, model: M) -> Self {
+        #[cfg(debug_assertions)]
+        assert_precision_sufficient::<M>(model.max_denominator(), state.state.precision);
+
         Self { model, state }
     }
 
@@ -144,10 +139,7 @@ where
     where
         X: Model<B = M::B>,
     {
-        Decoder {
-            model,
-            state: self.state,
-        }
+        Decoder::with_state(self.state, model)
     }
 
     /// todo

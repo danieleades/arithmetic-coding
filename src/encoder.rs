@@ -4,7 +4,10 @@ use std::{io, ops::Range};
 
 use bitstream_io::BitWrite;
 
-use crate::{common, BitStore, Error, Model};
+use crate::{
+    common::{self, assert_precision_sufficient},
+    BitStore, Error, Model,
+};
 
 // this algorithm is derived from this article - https://marknelson.us/posts/2014/10/19/data-compression-with-arithmetic-coding.html
 
@@ -65,27 +68,17 @@ where
     /// If these constraints cannot be satisfied this method will panic in debug
     /// builds
     pub fn with_precision(model: M, bitwriter: &'a mut W, precision: u32) -> Self {
-        let frequency_bits = model.max_denominator().log2() + 1;
-        debug_assert!(
-            (precision >= (frequency_bits + 2)),
-            "not enough bits of precision to prevent overflow/underflow",
-        );
-        debug_assert!(
-            (frequency_bits + precision) <= M::B::BITS,
-            "not enough bits in BitStore to support the required precision",
-        );
-
-        Self {
-            model,
-            state: State::new(precision, bitwriter),
-        }
+        let state = State::new(precision, bitwriter);
+        Self::with_state(state, model)
     }
 
     /// Create an encoder from an existing [`State`].
     ///
     /// This is useful for manually chaining a shared buffer through multiple
     /// encoders.
-    pub const fn with_state(state: State<'a, M::B, W>, model: M) -> Self {
+    pub fn with_state(state: State<'a, M::B, W>, model: M) -> Self {
+        #[cfg(debug_assertions)]
+        assert_precision_sufficient::<M>(model.max_denominator(), state.state.precision);
         Self { model, state }
     }
 
@@ -162,10 +155,7 @@ where
     where
         X: Model<B = M::B>,
     {
-        Encoder {
-            model,
-            state: self.state,
-        }
+        Encoder::with_state(self.state, model)
     }
 }
 
