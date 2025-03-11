@@ -160,13 +160,7 @@ where
     where
         X: Model<B = M::B>,
     {
-        #[cfg(debug_assertions)]
-        assert_precision_sufficient::<X>(model.max_denominator(), self.state.state.precision);
-
-        Encoder {
-            model,
-            state: self.state,
-        }
+        Encoder::with_state(self.state, model)
     }
 }
 
