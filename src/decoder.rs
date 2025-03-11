@@ -82,12 +82,8 @@ where
     /// If these constraints cannot be satisfied this method will panic in debug
     /// builds
     pub fn with_precision(model: M, input: R, precision: u32) -> Self {
-        #[cfg(debug_assertions)]
-        assert_precision_sufficient::<M>(model.max_denominator(), precision);
-
         let state = State::new(precision, input);
-
-        Self { model, state }
+        Self::with_state(state, model)
     }
 
     /// todo

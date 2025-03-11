@@ -68,13 +68,8 @@ where
     /// If these constraints cannot be satisfied this method will panic in debug
     /// builds
     pub fn with_precision(model: M, bitwriter: &'a mut W, precision: u32) -> Self {
-        #[cfg(debug_assertions)]
-        assert_precision_sufficient::<M>(model.max_denominator(), precision);
-
-        Self {
-            model,
-            state: State::new(precision, bitwriter),
-        }
+        let state = State::new(precision, bitwriter);
+        Self::with_state(state, model)
     }
 
     /// Create an encoder from an existing [`State`].
