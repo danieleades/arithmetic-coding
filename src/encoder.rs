@@ -81,7 +81,9 @@ where
     ///
     /// This is useful for manually chaining a shared buffer through multiple
     /// encoders.
-    pub const fn with_state(state: State<'a, M::B, W>, model: M) -> Self {
+    pub fn with_state(state: State<'a, M::B, W>, model: M) -> Self {
+        #[cfg(debug_assertions)]
+        assert_precision_sufficient::<M>(model.max_denominator(), state.state.precision);
         Self { model, state }
     }
 

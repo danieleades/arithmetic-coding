@@ -91,7 +91,10 @@ where
     }
 
     /// todo
-    pub const fn with_state(state: State<M::B, R>, model: M) -> Self {
+    pub fn with_state(state: State<M::B, R>, model: M) -> Self {
+        #[cfg(debug_assertions)]
+        assert_precision_sufficient::<M>(model.max_denominator(), state.state.precision);
+
         Self { model, state }
     }
 
