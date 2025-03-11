@@ -16,6 +16,7 @@ impl one_shot::Model for SmallModel {
     type ValueError = Infallible;
 
     fn probability(&self, &value: &Self::Symbol) -> Result<Range<Self::B>, Self::ValueError> {
+        #[allow(clippy::range_plus_one)]
         Ok(value..value + 1)
     }
 
@@ -36,11 +37,12 @@ impl one_shot::Model for BigModel {
     type ValueError = Infallible;
 
     fn probability(&self, &value: &Self::Symbol) -> Result<Range<Self::B>, Self::ValueError> {
+        #[allow(clippy::range_plus_one)]
         Ok(value..value + 1)
     }
 
     fn max_denominator(&self) -> Self::B {
-        u32::MAX as u64 / 2
+        u64::from(u32::MAX) / 2
     }
 
     fn symbol(&self, value: Self::B) -> Self::Symbol {
