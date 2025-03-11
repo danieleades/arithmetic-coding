@@ -25,7 +25,7 @@ checksum = "55cc3b69f167a1ef2e161439aa98aed94e6028e5f9a59be9a6ffb47aef1651f9"
 
 [[package]]
 name = "arithmetic-coding"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "arithmetic-coding-core",
  "bitstream-io",
@@ -37,7 +37,7 @@ dependencies = [
 
 [[package]]
 name = "arithmetic-coding-core"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "thiserror",
 ]
@@ -205,7 +205,7 @@ checksum = "8da8259e81fd417a39d43d803d72458fcfac27206470d303e85be455e3361030"
 
 [[package]]
 name = "fenwick-model"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "arithmetic-coding-core",
  "fenwick",
