@@ -92,7 +92,7 @@ where
     /// This method can fail if the underlying [`BitWrite`] cannot be written
     /// to.
     pub fn encode_all(
-        &mut self,
+        mut self,
         symbols: impl IntoIterator<Item = M::Symbol>,
     ) -> Result<(), Error<M::ValueError>> {
         for symbol in symbols {
@@ -138,7 +138,7 @@ where
     ///
     /// This method can fail if the underlying [`BitWrite`] cannot be written
     /// to.
-    pub fn flush(&mut self) -> io::Result<()> {
+    pub fn flush(self) -> io::Result<()> {
         self.state.flush()
     }
 
@@ -236,7 +236,7 @@ where
     /// # Errors
     ///
     /// This method can fail if the output cannot be written to
-    pub fn flush(&mut self) -> io::Result<()> {
+    pub fn flush(mut self) -> io::Result<()> {
         self.pending += 1;
         if self.state.low <= self.state.quarter() {
             self.emit(false)?;
