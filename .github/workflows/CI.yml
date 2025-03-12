@@ -44,6 +44,8 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - uses: EmbarkStudios/cargo-deny-action@v1
+      with:
+        rust-version: stable
 
   msrv:
     runs-on: ubuntu-latest

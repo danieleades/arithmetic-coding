@@ -4,7 +4,7 @@
 
 use std::{convert::Infallible, io::Cursor, ops::Range};
 
-use arithmetic_coding::{decoder, encoder, Decoder, Encoder};
+use arithmetic_coding::{Decoder, Encoder, decoder, encoder};
 use arithmetic_coding_core::one_shot;
 use bitstream_io::{BigEndian, BitReader, BitWriter};
 
