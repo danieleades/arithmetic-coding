@@ -10,7 +10,7 @@ categories = ["compression", "encoding", "parsing"]
 repository = "https://github.com/danieleades/arithmetic-coding"
 
 [workspace.dependencies]
-thiserror = "2.0.3"
+thiserror = "2.0.12"
 
 [workspace.lints.clippy]
 cargo = "deny"
