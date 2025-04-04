@@ -2,7 +2,7 @@
 members = [".", "arithmetic-coding-core", "fenwick-model"]
 
 [workspace.package]
-rust-version = "1.79.0"
+rust-version = "1.83.0"
 edition = "2021"
 license = "MIT"
 keywords = ["compression", "encoding", "arithmetic-coding", "lossless"]
