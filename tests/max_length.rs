@@ -12,6 +12,11 @@ pub enum Symbol {
     C,
 }
 
+/// This model encodes a variable number of symbols, up to a maximum of 3.
+///
+/// By taking advantage of the fact that the maximum number of symbols is known
+/// ahead of time, compression is improved compared to a fully variable-length
+/// model.
 #[derive(Clone)]
 pub struct MyModel;
 

@@ -86,7 +86,10 @@ where
         Self::with_state(state, model)
     }
 
-    /// todo
+    /// Create a decoder from an existing [`State`] and [`Model`].
+    ///
+    /// This is useful for manually chaining a shared buffer through multiple
+    /// decoders.
     pub fn with_state(state: State<M::B, R>, model: M) -> Self {
         #[cfg(debug_assertions)]
         assert_precision_sufficient::<M>(model.max_denominator(), state.state.precision);
@@ -97,7 +100,7 @@ where
     /// Return an iterator over the decoded symbols.
     ///
     /// The iterator will continue returning symbols until EOF is reached
-    pub fn decode_all(&mut self) -> DecodeIter<M, R> {
+    pub const fn decode_all(&mut self) -> DecodeIter<M, R> {
         DecodeIter { decoder: self }
     }
 
@@ -142,7 +145,7 @@ where
         Decoder::with_state(self.state, model)
     }
 
-    /// todo
+    /// Return the internal model and state of the decoder.
     pub fn into_inner(self) -> (M, State<M::B, R>) {
         (self.model, self.state)
     }
@@ -177,6 +180,7 @@ where
     B: BitStore,
     R: BitRead,
 {
+    #[allow(clippy::struct_field_names)]
     state: common::State<B>,
     input: R,
     x: B,
@@ -188,7 +192,8 @@ where
     B: BitStore,
     R: BitRead,
 {
-    /// todo
+    /// Create a new [`State`] from an input stream of bits with a given
+    /// precision.
     pub fn new(precision: u32, input: R) -> Self {
         let state = common::State::new(precision);
         let x = B::ZERO;

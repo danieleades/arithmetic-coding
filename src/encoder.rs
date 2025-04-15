@@ -142,7 +142,7 @@ where
         self.state.flush()
     }
 
-    /// todo
+    /// Return the internal model and state of the encoder.
     pub fn into_inner(self) -> (M, State<'a, M::B, W>) {
         (self.model, self.state)
     }
@@ -166,6 +166,7 @@ where
     B: BitStore,
     W: BitWrite,
 {
+    #[allow(clippy::struct_field_names)]
     state: common::State<B>,
     pending: u32,
     output: &'a mut W,
