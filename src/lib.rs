@@ -1,6 +1,10 @@
 //! Arithmetic coding library
 
-#![deny(missing_docs, missing_debug_implementations)]
+#![deny(
+    missing_docs,
+    missing_debug_implementations,
+    missing_copy_implementations
+)]
 
 pub use arithmetic_coding_core::{fixed_length, max_length, one_shot, BitStore, Model};
 

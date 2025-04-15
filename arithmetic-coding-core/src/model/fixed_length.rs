@@ -126,7 +126,9 @@ pub trait Model {
     /// no-op by default.
     fn update(&mut self, _symbol: &Self::Symbol) {}
 
-    /// The total number of symbols to encode
+    /// The total number of symbols to encode.
+    ///
+    /// This must not change during encoding/decoding.
     fn length(&self) -> usize;
 }
 
