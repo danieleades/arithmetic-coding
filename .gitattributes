@@ -1,1 +1,1 @@
-Cargo.lock binary
+Cargo.lock -diff merge=ours
