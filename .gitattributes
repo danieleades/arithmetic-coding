@@ -1,1 +1,1 @@
-uv.lock -diff merge=ours
+Cargo.lock -diff merge=ours
