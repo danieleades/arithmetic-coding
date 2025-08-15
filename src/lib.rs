@@ -6,7 +6,7 @@
     missing_copy_implementations
 )]
 
-pub use arithmetic_coding_core::{fixed_length, max_length, one_shot, BitStore, Model};
+pub use arithmetic_coding_core::{BitStore, Model, fixed_length, max_length, one_shot};
 
 mod common;
 pub mod decoder;
