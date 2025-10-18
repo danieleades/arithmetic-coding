@@ -17,7 +17,7 @@ where
 {
     pub fn new(precision: u32) -> Self {
         let low = B::ZERO;
-        let high = B::ONE << precision;
+        let high = (B::ONE << precision) - B::ONE;
 
         Self {
             precision,
