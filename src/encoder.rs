@@ -239,7 +239,7 @@ where
     /// This method can fail if the output cannot be written to
     pub fn flush(mut self) -> io::Result<()> {
         self.pending += 1;
-        if self.state.low <= self.state.quarter() {
+        if self.state.low < self.state.half() {
             self.emit(false)?;
         } else {
             self.emit(true)?;
