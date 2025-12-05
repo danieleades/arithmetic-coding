@@ -209,13 +209,13 @@ where
     fn normalise(&mut self) -> io::Result<()> {
         while self.state.high < self.state.half() || self.state.low >= self.state.half() {
             if self.state.high < self.state.half() {
-                self.state.high <<= 1;
+                self.state.high = (self.state.high << 1) + B::ONE;
                 self.state.low <<= 1;
                 self.x <<= 1;
             } else {
                 // self.low >= self.half()
                 self.state.low = (self.state.low - self.state.half()) << 1;
-                self.state.high = (self.state.high - self.state.half()) << 1;
+                self.state.high = ((self.state.high - self.state.half()) << 1) + B::ONE;
                 self.x = (self.x - self.state.half()) << 1;
             }
 
@@ -228,7 +228,7 @@ where
             && self.state.high < (self.state.three_quarter())
         {
             self.state.low = (self.state.low - self.state.quarter()) << 1;
-            self.state.high = (self.state.high - self.state.quarter()) << 1;
+            self.state.high = ((self.state.high - self.state.quarter()) << 1) + B::ONE;
             self.x = (self.x - self.state.quarter()) << 1;
 
             if self.input.next_bit()? == Some(true) {
