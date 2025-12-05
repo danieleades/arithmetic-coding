@@ -1,6 +1,7 @@
-use std::{fs::File, io::Read, ops::Range};
+use std::{fs::File, hint::black_box, io::Read, ops::Range};
 
 use arithmetic_coding::Model;
+use criterion::{criterion_group, criterion_main, Criterion};
 use fenwick_model::{simple::FenwickModel, ValueError};
 
 mod common;
@@ -57,8 +58,6 @@ fn round_trip(input: &[u8]) {
 
     common::round_trip(model, input);
 }
-
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
 #[allow(clippy::missing_panics_doc)]
 pub fn criterion_benchmark(c: &mut Criterion) {
