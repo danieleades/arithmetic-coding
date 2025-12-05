@@ -6,4 +6,4 @@ mod bitstore;
 pub use bitstore::BitStore;
 
 mod model;
-pub use model::{fixed_length, max_length, one_shot, Model};
+pub use model::{Model, fixed_length, max_length, one_shot};

@@ -5,8 +5,8 @@ use std::{io, ops::Range};
 use bitstream_io::BitWrite;
 
 use crate::{
-    common::{self, assert_precision_sufficient},
     BitStore, Error, Model,
+    common::{self, assert_precision_sufficient},
 };
 
 // this algorithm is derived from this article - https://marknelson.us/posts/2014/10/19/data-compression-with-arithmetic-coding.html

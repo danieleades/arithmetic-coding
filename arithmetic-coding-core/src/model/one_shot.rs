@@ -3,7 +3,7 @@
 use std::ops::Range;
 
 pub use crate::fixed_length::Wrapper;
-use crate::{fixed_length, BitStore};
+use crate::{BitStore, fixed_length};
 
 /// A [`Model`] is used to calculate the probability of a given symbol occurring
 /// in a sequence.
