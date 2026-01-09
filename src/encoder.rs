@@ -16,16 +16,16 @@ use crate::{
 /// An arithmetic decoder converts a stream of symbols into a stream of bits,
 /// using a predictive [`Model`].
 #[derive(Debug)]
-pub struct Encoder<'a, M, W>
+pub struct Encoder<M, W>
 where
     M: Model,
     W: BitWrite,
 {
     model: M,
-    state: State<'a, M::B, W>,
+    state: State<M::B, W>,
 }
 
-impl<'a, M, W> Encoder<'a, M, W>
+impl<M, W> Encoder<M, W>
 where
     M: Model,
     W: BitWrite,
@@ -48,7 +48,7 @@ where
     ///
     /// If these constraints cannot be satisfied this method will panic in debug
     /// builds
-    pub fn new(model: M, bitwriter: &'a mut W) -> Self {
+    pub fn new(model: M, bitwriter: W) -> Self {
         let frequency_bits = model.max_denominator().log2() + 1;
         let precision = M::B::BITS - frequency_bits;
         Self::with_precision(model, bitwriter, precision)
@@ -67,7 +67,7 @@ where
     ///
     /// If these constraints cannot be satisfied this method will panic in debug
     /// builds
-    pub fn with_precision(model: M, bitwriter: &'a mut W, precision: u32) -> Self {
+    pub fn with_precision(model: M, bitwriter: W, precision: u32) -> Self {
         let state = State::new(precision, bitwriter);
         Self::with_state(state, model)
     }
@@ -76,7 +76,7 @@ where
     ///
     /// This is useful for manually chaining a shared buffer through multiple
     /// encoders.
-    pub fn with_state(state: State<'a, M::B, W>, model: M) -> Self {
+    pub fn with_state(state: State<M::B, W>, model: M) -> Self {
         #[cfg(debug_assertions)]
         assert_precision_sufficient::<M>(model.max_denominator(), state.state.precision);
         Self { model, state }
@@ -143,7 +143,7 @@ where
     }
 
     /// Return the internal model and state of the encoder.
-    pub fn into_inner(self) -> (M, State<'a, M::B, W>) {
+    pub fn into_inner(self) -> (M, State<M::B, W>) {
         (self.model, self.state)
     }
 
@@ -151,7 +151,7 @@ where
     ///
     /// Allows for chaining multiple sequences of symbols into a single stream
     /// of bits
-    pub fn chain<X>(self, model: X) -> Encoder<'a, X, W>
+    pub fn chain<X>(self, model: X) -> Encoder<X, W>
     where
         X: Model<B = M::B>,
     {
@@ -161,7 +161,7 @@ where
 
 /// A convenience struct which stores the internal state of an [`Encoder`].
 #[derive(Debug)]
-pub struct State<'a, B, W>
+pub struct State<B, W>
 where
     B: BitStore,
     W: BitWrite,
@@ -169,10 +169,10 @@ where
     #[allow(clippy::struct_field_names)]
     state: common::State<B>,
     pending: u32,
-    output: &'a mut W,
+    output: W,
 }
 
-impl<'a, B, W> State<'a, B, W>
+impl<B, W> State<B, W>
 where
     B: BitStore,
     W: BitWrite,
@@ -181,7 +181,7 @@ where
     ///
     /// Normally this would be done automatically using the [`Encoder::new`]
     /// method.
-    pub fn new(precision: u32, output: &'a mut W) -> Self {
+    pub fn new(precision: u32, output: W) -> Self {
         let state = common::State::new(precision);
         let pending = 0;
 

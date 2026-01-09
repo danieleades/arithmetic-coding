@@ -17,9 +17,10 @@ where
     M: Model,
 {
     let mut bitwriter = BitWriter::endian(Vec::new(), BigEndian);
-    let mut encoder = Encoder::<M>::new(model);
+    let encoder = Encoder::new(model, &mut bitwriter);
 
-    encoder.encode_all(input, &mut bitwriter).expect("failed to encode data!");
+    encoder.encode_all(input).expect("failed to encode data!");
+    
     bitwriter.byte_align().expect("failed to byte-align the stream");
 
     bitwriter.into_writer()
@@ -30,7 +31,7 @@ where
     M: Model,
 {
     let bitreader = BitReader::endian(buffer, BigEndian);
-    let mut decoder = Decoder::new(model, bitreader).unwrap();
+    let mut decoder = Decoder::new(model, bitreader);
 
     decoder.decode_all().map(Result::unwrap).collect()
 }
