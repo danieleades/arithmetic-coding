@@ -99,7 +99,7 @@ fn main() {
 
     let buffer = encode2(symbolic::Model, &input1, integer::Model, &input2);
 
-    println!("\nbuffer: {:?}", &buffer);
+    println!("\nbuffer: {buffer:?}");
 
     println!("\ndecoding...");
     let (output1, output2) = decode2(symbolic::Model, integer::Model, &buffer);
