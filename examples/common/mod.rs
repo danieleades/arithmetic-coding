@@ -7,12 +7,12 @@ where
     M: Model + Clone,
     M::Symbol: std::fmt::Debug,
 {
-    println!("input: {:?}", &input);
+    println!("input: {input:?}");
 
     println!("\nencoding...");
     let buffer = encode(model.clone(), input);
 
-    println!("buffer: {:?}", &buffer);
+    println!("buffer: {buffer:?}");
 
     println!("\ndecoding...");
     for symbol in decode(model, &buffer) {
