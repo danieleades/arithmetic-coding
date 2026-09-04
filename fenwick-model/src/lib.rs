@@ -68,7 +68,8 @@ impl Weights {
         // Ensure the search range is valid (low < high)
         debug_assert!(low < high, "Invalid search range");
 
-        // Verify that prefix_sum is within the valid range of cumulative weights
+        // Verify that prefix_sum is within the valid range of cumulative
+        // weights
         debug_assert!(
             prefix_sum < self.prefix_sum(Some(high - 1)),
             "'prefix_sum' is out of bounds"
