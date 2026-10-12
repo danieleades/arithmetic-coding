@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1](https://github.com/danieleades/arithmetic-coding/compare/arithmetic-coding-v0.5.0...arithmetic-coding-v0.5.1) - 2026-09-07
+
+### Other
+
+- *(deps)* bump codecov/codecov-action from 6 to 7 ([#116](https://github.com/danieleades/arithmetic-coding/pull/116))
+- *(deps)* bump thiserror ([#123](https://github.com/danieleades/arithmetic-coding/pull/123))
+- *(deps)* bump actions/checkout from 6 to 7 ([#117](https://github.com/danieleades/arithmetic-coding/pull/117))
+- *(deps)* bump actions-rs-plus/clippy-check from 2.7.0 to 2.7.1 ([#122](https://github.com/danieleades/arithmetic-coding/pull/122))
+- *(deps)* bump thiserror in the patch-updates group ([#121](https://github.com/danieleades/arithmetic-coding/pull/121))
+- *(deps)* bump actions-rs-plus/clippy-check from 2 to 2.7 ([#120](https://github.com/danieleades/arithmetic-coding/pull/120))
+
 ## [0.5.0](https://github.com/danieleades/arithmetic-coding/compare/arithmetic-coding-v0.4.0...arithmetic-coding-v0.5.0) - 2025-03-11
 
 ### Added
